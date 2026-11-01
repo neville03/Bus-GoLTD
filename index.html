@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bus&amp;Go</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: one white canvas; sticky header with a role switch; content in an 1120px column. Cards only where something is actionable. Yellow is reserved for the brand mark and focus. */
+  --bg:#ffffff; --ink:#16181d; --muted:#656b75; --line:#e6e7ea; --soft:#f5f6f8;
+  --accent:#f2b705; --accent-soft:#fff7dc; --accent-ink:#6b4f00;
+  --ok:#1b7f47; --ok-soft:#e8f5ed; --warn:#9a5a00; --warn-soft:#fff3e0; --bad:#b8332a; --bad-soft:#fdeeec; --info:#2557a7; --info-soft:#ebf1fb;
+  --font-display:'Sora', system-ui, sans-serif;
+  --font-body:'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --r:12px;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:26px;line-height:1.2} h2{font-size:20px;line-height:1.25} h3{font-size:16px} h4{font-size:14px}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .small{font-size:13px} .tiny{font-size:12px}
+.ic{flex:none;vertical-align:-3px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* header */
+header.top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1120px;margin:0 auto;padding:12px 16px 0;display:flex;flex-direction:column;gap:10px}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.02em;text-decoration:none}
+.logo-mark{width:30px;height:30px;border-radius:9px;background:var(--accent);display:grid;place-items:center;color:var(--ink)}
+.logo small{font-family:var(--font-body);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:0;margin-left:2px}
+.top-actions{display:flex;gap:6px}
+.roles{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.roles::-webkit-scrollbar{display:none}
+.role{border:0;background:none;padding:9px 12px 11px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;display:flex;gap:6px;align-items:center}
+.role:hover{color:var(--ink)}
+.role[aria-current="page"]{color:var(--ink);border-bottom-color:var(--ink)}
+
+main{max-width:1120px;margin:0 auto;padding:20px 16px 80px;display:flex;flex-direction:column;gap:22px}
+
+/* controls */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--bg);padding:9px 14px;border-radius:10px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background .15s,border-color .15s}
+.btn:hover{background:var(--soft)}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.primary:hover{background:#2c2f36}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.danger{color:var(--bad);border-color:#efc9c5}
+.btn.danger:hover{background:var(--bad-soft)}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}
+.btn.lg{padding:13px 18px;font-size:16px;border-radius:12px}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;padding:0;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;color:var(--ink)}
+.link:hover{text-decoration:underline}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
+.inp{width:100%;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);font-size:15px;color:var(--ink);font-weight:500}
+.inp:focus{outline:none;border-color:var(--ink)}
+textarea.inp{min-height:84px;resize:vertical}
+.chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-weight:500}
+.chk input{width:18px;height:18px;accent-color:var(--ink);margin-top:2px;flex:none}
+
+/* chips & pills */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;gap:5px;align-items:center}
+.chip:hover{border-color:#c9ccd2}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600;background:var(--soft);color:var(--muted);white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.info{background:var(--info-soft);color:var(--info)}
+.pill.acc{background:var(--accent-soft);color:var(--accent-ink)}
+.pill.dot::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.verified{color:var(--info);display:inline-flex;align-items:center;gap:3px;font-weight:600;font-size:13px}
+
+/* layout */
+.card{border:1px solid var(--line);border-radius:var(--r);background:var(--bg);padding:18px}
+.card.flat{border:0;background:var(--soft)}
+.stack{display:flex;flex-direction:column;gap:14px}
+.stack.s{gap:8px} .stack.l{gap:22px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.results{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.split{display:grid;gap:22px;grid-template-columns:minmax(0,1fr) 360px;align-items:start}
+.sticky{position:sticky;top:120px}
+hr.sep{border:0;border-top:1px solid var(--line);margin:0;width:100%}
+.section-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+@media (max-width:860px){.split{grid-template-columns:1fr}.sticky{position:static}.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.g2,.g3{grid-template-columns:1fr}h1{font-size:22px}}
+
+/* search */
+.search{display:grid;gap:10px;grid-template-columns:1.3fr 1.3fr 1fr 1fr .7fr 1.2fr auto;align-items:end;padding:14px;border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 24px -14px rgba(20,22,28,.25)}
+@media (max-width:980px){.search{grid-template-columns:1fr 1fr}.search .go{grid-column:1/-1}}
+
+/* bus card */
+.bus{border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;background:var(--bg);transition:box-shadow .15s,border-color .15s;text-align:left;padding:0}
+.bus:hover{border-color:#cfd2d8;box-shadow:0 10px 26px -18px rgba(20,22,28,.4)}
+.bus.off{opacity:.62}
+.bus .art{background:var(--soft);aspect-ratio:17/8;display:block;width:100%}
+.bus .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px}
+.price{font-weight:700;font-size:16px}
+.price span{font-weight:500;color:var(--muted);font-size:13px}
+.star{color:#c98f00}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--soft)}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border-bottom:0}
+.kv.total{border-top:1px solid var(--ink);border-bottom:0;font-weight:700;padding-top:10px;margin-top:4px}
+
+/* tiles */
+.tile{border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.tile .v{font-family:var(--font-display);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile .l{font-size:13px;color:var(--muted)}
+
+/* tabs */
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:7px 14px;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.tab[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.count{background:var(--bad);color:#fff;font-size:11px;border-radius:999px;padding:0 6px;line-height:18px;min-width:18px;text-align:center}
+
+/* calendar */
+.cals{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.cal-h{font-weight:600;margin-bottom:8px;font-size:14px}
+.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;user-select:none}
+.cal-g.edit{touch-action:none}
+.dow{font-size:11px;color:var(--muted);text-align:center;padding-bottom:2px;font-weight:600}
+.day{aspect-ratio:1;border-radius:7px;display:grid;place-items:center;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;background:var(--ok-soft);color:var(--ok)}
+.day.blk{background:repeating-linear-gradient(135deg,#eceef1 0 4px,#f6f7f9 4px 8px);color:#9aa0a8}
+.day.bkd{background:var(--ink);color:#fff}
+.day.req{background:var(--info-soft);color:var(--info)}
+.day.past{background:none;color:#c3c7cd}
+.day.sel{outline:2px solid var(--accent);outline-offset:-2px}
+.day.ed{cursor:pointer}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-2px;margin-right:5px}
+
+/* stepper */
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.step{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;color:var(--muted);padding-right:10px}
+.step b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);font-size:12px}
+.step.on{color:var(--ink)} .step.on b{background:var(--ink);color:#fff;border-color:var(--ink)}
+.step.done b{background:var(--ok);color:#fff;border-color:var(--ok)}
+
+/* timeline */
+.tl{display:flex;gap:0;margin:4px 0}
+.tl > div{flex:1;display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)}
+.tl .bar{height:4px;border-radius:2px;background:var(--line)}
+.tl .on{color:var(--ink)} .tl .on .bar{background:var(--ok)}
+.tl > div + div .bar{margin-left:3px}
+
+.notice{display:flex;gap:10px;padding:12px 14px;border-radius:10px;font-size:14px;align-items:flex-start}
+.notice.warn{background:var(--warn-soft);color:#5b3600}
+.notice.info{background:var(--info-soft);color:#173a73}
+.notice.ok{background:var(--ok-soft);color:#0f4f2b}
+.notice.bad{background:var(--bad-soft);color:#7a1d16}
+.notice.acc{background:var(--accent-soft);color:#4d3900}
+
+.progress{height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.progress > i{display:block;height:100%;background:var(--ink);border-radius:4px;transition:width .4s}
+.progress.done > i{background:var(--ok)}
+
+/* list rows */
+.list{border:1px solid var(--line);border-radius:var(--r)}
+.li{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.li:last-child{border-bottom:0}
+.li .main{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 260px}
+
+/* checklist */
+.check{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--bg);width:100%;text-align:left}
+.check .box{width:26px;height:26px;border-radius:8px;border:1.5px solid #c6c9cf;display:grid;place-items:center;flex:none;color:#fff}
+.check.on{border-color:#bfe2cc;background:var(--ok-soft)}
+.check.on .box{background:var(--ok);border-color:var(--ok)}
+.pf{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:none}
+.pf button{border:0;background:var(--bg);padding:6px 12px;font-weight:600;font-size:13px;cursor:pointer}
+.pf button + button{border-left:1px solid var(--line)}
+.pf button.p[aria-pressed="true"]{background:var(--ok);color:#fff}
+.pf button.f[aria-pressed="true"]{background:var(--bad);color:#fff}
+
+.phone{max-width:420px;width:100%;margin:0 auto;border:1px solid var(--line);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px -30px rgba(20,22,28,.35)}
+.phone-bar{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:600}
+
+.map{border-radius:12px;background:var(--soft);overflow:hidden}
+.stars{display:flex;gap:4px}
+.stars button{background:none;border:0;cursor:pointer;padding:2px;color:#d3d6db}
+.stars button.on{color:#e0a100}
+
+/* modal & toast */
+.scrim{position:fixed;inset:0;background:rgba(18,20,24,.38);z-index:50;display:grid;place-items:center;padding:16px}
+.modal{background:var(--bg);border-radius:16px;max-width:520px;width:100%;max-height:calc(100% - 32px);overflow:auto;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 30px 60px -20px rgba(0,0,0,.35)}
+.toasts{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;width:min(440px,calc(100% - 32px))}
+.toast{background:var(--ink);color:#fff;border-radius:12px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start;box-shadow:0 14px 30px -12px rgba(0,0,0,.45);animation:tin .25s ease-out}
+.toast .via{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--accent)}
+@keyframes tin{from{transform:translateY(8px);opacity:.3}to{transform:none;opacity:1}}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.hero{display:flex;flex-direction:column;gap:6px}
+.hero h1 em{font-style:normal;background:linear-gradient(transparent 62%,var(--accent-soft) 62%)}
+.mini-card{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--bg);cursor:pointer}
+.mini-card:hover{border-color:#cfd2d8}
+.hscroll{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,1fr);gap:12px;overflow-x:auto;padding-bottom:4px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="top-row">
+      <a class="logo" href="#hire" aria-label="Bus&amp;Go home">
+        <span class="logo-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21v-3M16 21v-3"/><circle cx="8" cy="14.5" r=".6" fill="currentColor"/><circle cx="16" cy="14.5" r=".6" fill="currentColor"/></svg></span>
+        Bus&amp;Go <small>Ltd</small>
+      </a>
+      <div class="top-actions">
+        <button class="btn sm" data-act="guide">Demo guide</button>
+        <button class="btn sm" data-act="reset" title="Restore the sample data">Reset</button>
+      </div>
+    </div>
+    <nav class="roles" id="roles" aria-label="Switch view"></nav>
+  </div>
+</header>
+<main id="app"></main>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div id="modal"></div>
+
+<script>
+/* ============ constants & helpers ============ */
+const TODAY = '2026-11-01';
+const STORE = 'busandgo-demo-v1';
+const SEAT_SIZES = [14,18,25,33,45,60];
+const SUGGESTED = {14:350000,18:450000,25:600000,33:750000,45:920000,60:1150000};
+const PURPOSES = ['School trip','Church event','Wedding','Funeral','Corporate staff trip','Tour','Sports club','NGO field programme','University or student group','Special conversion project'];
+const TOWNS = {
+  'Kampala':[0.3476,32.5825],'Entebbe':[0.0512,32.4637],'Mukono':[0.3533,32.7553],'Wakiso':[0.4044,32.4594],
+  'Jinja':[0.4244,33.2042],'Masaka':[-0.3338,31.7341],'Mbarara':[-0.6072,30.6545],'Lake Mburo':[-0.62,30.95],
+  'Fort Portal':[0.671,30.275],'Murchison Falls':[2.2785,31.68],'Gulu':[2.7724,32.2881],'Mbale':[1.0827,34.175],'Kabale':[-1.2486,29.9899]
+};
+const PICKUPS = ['Kampala','Entebbe','Mukono','Wakiso','Jinja'];
+const ME = {name:'Grace Namusoke', org:'Bethel Community Church', phone:'0772 418 552'};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => 'UGX ' + Math.round(n).toLocaleString('en-US');
+const fmtK = n => n >= 1e6 ? 'UGX ' + (n/1e6).toFixed(n%1e6===0?0:2).replace(/\.?0+$/,'') + 'M' : 'UGX ' + Math.round(n/1000) + 'k';
+const toD = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const addDays = (s,n) => { const d = toD(s); d.setDate(d.getDate()+n); return iso(d); };
+const diff = (a,b) => Math.round((toD(b)-toD(a))/864e5);
+const fmtDate = (s, y) => toD(s).toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', ...(y?{year:'numeric'}:{})});
+const fmtRange = (a,b) => a===b ? fmtDate(a) : `${fmtDate(a)} – ${fmtDate(b)}`;
+const range = (a,b) => { const out=[]; for(let s=a; s<=b; s=addDays(s,1)) out.push(s); return out; };
+const roundTo = (n, step) => Math.round(n/step)*step;
+function roadKm(a,b){
+  if(a===b) return 20;
+  const [la1,lo1] = TOWNS[a], [la2,lo2] = TOWNS[b], R=6371, r=Math.PI/180;
+  const h = Math.sin((la2-la1)*r/2)**2 + Math.cos(la1*r)*Math.cos(la2*r)*Math.sin((lo2-lo1)*r/2)**2;
+  return roundTo(2*R*Math.asin(Math.sqrt(h))*1.3, 5);
+}
+const uid = p => p + Math.random().toString(36).slice(2,7);
+
+const I = {
+  check:'<path d="M5 12.5l4.2 4.2L19 7"/>',
+  shield:'<path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
+  pin:'<path d="M12 21s-6-5.6-6-11a6 6 0 1112 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/>',
+  cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  users:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.5a3 3 0 010 6M21 20c0-2.6-1.6-4.8-4-5.6"/>',
+  snow:'<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/>',
+  gps:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>',
+  belt:'<path d="M7 3l10 18"/><rect x="9" y="11" width="6" height="4" rx="1"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>',
+  next:'<path d="M9 5l7 7-7 7"/>',
+  alert:'<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',
+  wrench:'<path d="M14.5 5.5a4 4 0 00-5 5L4 16l4 4 5.5-5.5a4 4 0 005-5l-2.5 2.5-2.5-.5-.5-2.5z"/>',
+  chat:'<path d="M4 19l1.3-3.6A8 8 0 1112 20a8 8 0 01-3.8-1z"/>',
+  phone:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  camera:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  route:'<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 000-6H9a3 3 0 010-6h6.5"/>',
+  gift:'<rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 9h18M12 9v11M12 9c-1.5-3-5-4-5-1.5S10 9 12 9zm0 0c1.5-3 5-4 5-1.5S14 9 12 9z"/>',
+  bus:'<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21v-3M16 21v-3"/>',
+  school:'<path d="M3 10l9-5 9 5-9 5z"/><path d="M7 12.5V17c3 2 7 2 10 0v-4.5"/>',
+  driver:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 14.5v6M9.6 11.2L4 9.5M14.4 11.2L20 9.5"/>',
+  admin:'<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+  doc:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>',
+  money:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>',
+  star:'<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/>'
+};
+const ic = (n, s=16, extra='') => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${I[n]}</svg>`;
+const starIc = (s=14) => `<svg class="ic star" width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${I.star}</svg>`;
+
+/* side-view bus drawing, scaled by seat count */
+function busArt(bus, big){
+  const len = bus.seats<=14?0.56: bus.seats<=18?0.64: bus.seats<=25?0.74: bus.seats<=33?0.82: bus.seats<=45?0.92:1;
+  const W = Math.round(286*len), x0 = Math.round((340-W)/2), top = bus.seats<=18?54:42, H = 118-top;
+  const n = Math.max(3, Math.round(W/34)-1), ww = (W-40-(n-1)*6)/n;
+  let win=''; for(let i=0;i<n;i++) win += `<rect x="${x0+12+i*(ww+6)}" y="${top+9}" width="${ww.toFixed(1)}" height="${Math.round(H*0.36)}" rx="3" fill="#24303d" opacity=".86"/>`;
+  const wy = 120, c = bus.color || '#f2b705';
+  return `<svg class="art" viewBox="0 0 340 160" role="img" aria-label="${esc(bus.seats)}-seat ${esc(bus.model)}" ${big?'style="border-radius:14px"':''}>
+    <rect width="340" height="160" fill="#f5f6f8"/>
+    <rect x="0" y="${wy+12}" width="340" height="28" fill="#eceef1"/>
+    <rect x="${x0}" y="${top}" width="${W}" height="${H}" rx="11" fill="${c}"/>
+    <rect x="${x0}" y="${top+H*0.62}" width="${W}" height="5" fill="#000" opacity=".12"/>
+    ${win}
+    <path d="M${x0+W-24} ${top+9}h12a6 6 0 016 6v${Math.round(H*0.36)-6}h-18z" fill="#24303d" opacity=".86"/>
+    <rect x="${x0+W-46}" y="${top+H*0.5}" width="16" height="${H*0.5-4}" rx="2" fill="#000" opacity=".14"/>
+    <rect x="${x0+W-6}" y="${top+H-20}" width="6" height="7" rx="2" fill="#fff7c2"/>
+    ${bus.schoolBus?`<text x="${x0+16}" y="${top+H*0.78}" font-family="DM Sans,sans-serif" font-size="9" font-weight="700" fill="#000" opacity=".5">${esc(bus.label||'')}</text>`:''}
+    <circle cx="${x0+W*0.2}" cy="${wy}" r="13" fill="#22252a"/><circle cx="${x0+W*0.2}" cy="${wy}" r="5" fill="#c9ccd1"/>
+    <circle cx="${x0+W*0.8}" cy="${wy}" r="13" fill="#22252a"/><circle cx="${x0+W*0.8}" cy="${wy}" r="5" fill="#c9ccd1"/>
+  </svg>`;
+}
+
+/* ============ seed data (all names are sample data) ============ */
+function weekdaysBetween(a,b,days=[1,2,3,4,5]){ return range(a,b).filter(s => days.includes(toD(s).getDay())); }
+function seed(){
+  const TERM = ['2026-11-02','2026-12-04'];
+  const schools = [
+    {id:'s1', name:'Kampala Hillside Academy', area:'Ntinda, Kampala', town:'Kampala', status:'verified', payout:'MTN MoMo · 0772 ••• 310', points:120,
+      trips:['2026-09-12','2026-09-19','2026-09-26','2026-10-17','2026-10-24'], unlock1:'2026-09-26', unlock2:null,
+      rewards:[{id:'r0', title:'Free weekly check', note:'Unlocked 26 Sep · 3 trips in 30 days', status:'used', used:'Used 2 Oct at Katwe Precision Motors'}],
+      ledger:[
+        {date:'2026-10-24', text:'Trip completed · Bright Future Sacco staff trip', pts:'+10'},
+        {date:'2026-10-17', text:'Trip completed · Ntinda Parents Association', pts:'+10'},
+        {date:'2026-10-02', text:'Free weekly check redeemed', pts:'reward used'},
+        {date:'2026-09-26', text:'Free weekly check unlocked (3 trips in 30 days)', pts:'reward'},
+        {date:'2026-09-08', text:'Late cancellation by school (under 48 hours)', pts:'−20'}
+      ]},
+    {id:'s2', name:'Lakeview College Entebbe', area:'Entebbe', town:'Entebbe', status:'verified', points:90, trips:[], rewards:[], ledger:[]},
+    {id:'s3', name:'Mukono Grace High School', area:'Mukono', town:'Mukono', status:'verified', points:60, trips:[], rewards:[], ledger:[]},
+    {id:'s4', name:'Jinja Riverside Primary', area:'Jinja', town:'Jinja', status:'verified', points:40, trips:[], rewards:[], ledger:[]},
+    {id:'s5', name:'Wakiso Hills Primary School', area:'Wakiso', town:'Wakiso', status:'pending', points:0, trips:[], rewards:[], ledger:[], docs:['Certificate of registration','Board resolution to hire out buses','MoMo payout details']}
+  ];
+  const mk = (o) => ({extraKm:2500, overnight:50000, weekly:o.daily*6, monthly:o.daily*22, reviews:[], selfDrive:false, schoolBus:true, ...o});
+  const buses = [
+    mk({id:'b1', school:'s1', model:'Toyota Coaster', seats:33, year:2019, plate:'UBK 412F', ac:true, belts:true, gps:true, daily:750000, color:'#f2b705', label:'HILLSIDE ACADEMY', inspection:'2026-10-24', insurer:'Jubilee Allied', insurance:'2026-11-19', driver:{name:'Joseph Okello', years:9, trips:212}, status:'listed',
+      reviews:[{by:'Ntinda Parents Association', stars:5, date:'2026-10-18', text:'Clean bus, Joseph was early and very careful on the Entebbe road.'},{by:'Esther N., youth leader', stars:5, date:'2026-09-20', text:'Seatbelts on every seat. The kids felt safe.'},{by:'Kampala Rotaract club', stars:4, date:'2026-08-30', text:'Good trip. AC was weak in the back rows.'}]}),
+    mk({id:'b2', school:'s1', model:'Isuzu NQR school bus', seats:60, year:2017, plate:'UAX 908K', ac:false, belts:true, gps:true, daily:1150000, color:'#f2b705', label:'HILLSIDE ACADEMY', inspection:'2026-10-10', insurer:'Jubilee Allied', insurance:'2027-05-02', driver:{name:'Moses Kato', years:12, trips:340}, status:'listed',
+      reviews:[{by:'Bright Future Sacco', stars:5, date:'2026-10-25', text:'Fit all 52 of us comfortably. Punctual both ways.'},{by:'St. Luke choir', stars:4, date:'2026-09-14', text:'No AC, but windows open well. Good driver.'}]}),
+    mk({id:'b3', school:'s1', model:'Toyota Hiace', seats:14, year:2021, plate:'UBF 220A', ac:true, belts:true, gps:true, daily:350000, color:'#ffffff', schoolBus:false, inspection:'2026-10-24', insurer:'Jubilee Allied', insurance:'2027-03-11', driver:{name:'Sarah Nabirye', years:6, trips:98}, status:'listed', selfDrive:true,
+      reviews:[{by:'Rhoda K., wedding planner', stars:5, date:'2026-10-04', text:'Perfect for the bridal party.'}]}),
+    mk({id:'b4', school:'s2', model:'Nissan Civilian', seats:25, year:2018, plate:'UAW 553B', ac:true, belts:true, gps:true, daily:600000, color:'#2f6fd0', schoolBus:false, inspection:'2026-10-18', insurer:'Sanlam', insurance:'2027-01-30', driver:{name:'Peter Ssempala', years:11, trips:260}, status:'listed',
+      reviews:[{by:'Makerere Debate Society', stars:5, date:'2026-10-11', text:'Very professional. Will book again.'},{by:'Achieng F.', stars:5, date:'2026-09-02', text:'Spotless inside.'}]}),
+    mk({id:'b5', school:'s2', model:'Mercedes-Benz coach', seats:60, year:2016, plate:'UAR 117T', ac:true, belts:true, gps:true, daily:1400000, color:'#ffffff', schoolBus:false, inspection:'2026-09-28', insurer:'Sanlam', insurance:'2027-02-14', driver:{name:'David Mugisha', years:15, trips:410}, status:'listed',
+      reviews:[{by:'Pearl Tours Ltd', stars:5, date:'2026-10-06', text:'Comfortable for the long Murchison run.'},{by:'Grace Fellowship', stars:4, date:'2026-08-21', text:'Great coach. Booking took a day to confirm.'}]}),
+    mk({id:'b6', school:'s3', model:'Toyota Coaster', seats:33, year:2016, plate:'UAN 640Q', ac:false, belts:true, gps:false, daily:680000, color:'#f2b705', label:'GRACE HIGH', inspection:'2026-10-05', insurer:'UAP Old Mutual', insurance:'2027-04-01', driver:{name:'Ivan Lubega', years:7, trips:150}, status:'listed',
+      reviews:[{by:'Mukono Rotary', stars:4, date:'2026-09-27', text:'Good value for money.'},{by:'Brian O.', stars:5, date:'2026-08-15', text:'Driver knew the route well.'}]}),
+    mk({id:'b7', school:'s3', model:'Tata Marcopolo', seats:45, year:2018, plate:'UAT 302J', ac:false, belts:true, gps:true, daily:900000, color:'#f2b705', label:'GRACE HIGH', inspection:'2026-10-12', insurer:'UAP Old Mutual', insurance:'2027-04-01', driver:{name:'Robert Wasswa', years:10, trips:188}, status:'listed',
+      reviews:[{by:'Kira Sports Club', stars:5, date:'2026-10-19', text:'Took the whole team and supporters.'},{by:'Harriet A.', stars:4, date:'2026-09-06', text:'Bus is old but very clean.'}]}),
+    mk({id:'b8', school:'s4', model:'Toyota Hiace', seats:18, year:2020, plate:'UBA 781C', ac:true, belts:true, gps:false, daily:450000, color:'#ffffff', schoolBus:false, inspection:'2026-10-20', insurer:'ICEA Lion', insurance:'2027-06-09', driver:{name:'Simon Mwesigwa', years:5, trips:77}, status:'listed', selfDrive:true,
+      reviews:[{by:'Nile Explorers group', stars:4, date:'2026-10-03', text:'Small flat tyre on the way, fixed fast.'}]}),
+    mk({id:'b9', school:'s4', model:'Ashok Leyland Falcon', seats:45, year:2014, plate:'UAK 019D', ac:false, belts:false, gps:false, daily:820000, color:'#f2b705', label:'RIVERSIDE', inspection:'2026-07-20', insurer:'ICEA Lion', insurance:'2027-01-12', driver:{name:'Alex Ochieng', years:8, trips:120}, status:'listed',
+      reviews:[{by:'Joan T.', stars:3, date:'2026-09-29', text:'Late pickup by 40 minutes.'},{by:'Busoga youth', stars:4, date:'2026-08-26', text:'Spacious.'},{by:'Mary K.', stars:3, date:'2026-07-10', text:'Seats need repair.'}]}),
+    mk({id:'b10', school:'s3', model:'Toyota Coaster', seats:30, year:2015, plate:'UAZ 761M', ac:false, belts:true, gps:false, daily:640000, color:'#f2b705', label:'GRACE HIGH', inspection:null, insurer:'UAP Old Mutual', insurance:'2027-04-01', driver:{name:'Ivan Lubega', years:7, trips:150}, status:'pending_inspection', reviews:[]}),
+    mk({id:'b11', school:'s2', model:'Toyota Hiace', seats:18, year:2022, plate:'UBH 905E', ac:true, belts:true, gps:true, daily:470000, color:'#2f6fd0', schoolBus:false, inspection:'2026-10-30', insurer:'Sanlam', insurance:'2027-09-30', driver:{name:'Peter Ssempala', years:11, trips:260}, status:'pending_approval', reviews:[]})
+  ];
+  const blackouts = {};
+  buses.forEach(b => {
+    if(b.id==='b5') blackouts[b.id] = weekdaysBetween(TERM[0],TERM[1],[5]);
+    else if(b.id==='b3') blackouts[b.id] = weekdaysBetween(TERM[0],TERM[1],[1,3,5]);
+    else blackouts[b.id] = weekdaysBetween(TERM[0],TERM[1]);
+  });
+  const mkB = (o) => { const bus = buses.find(x=>x.id===o.bus); return {addons:{ins:true,escort:false}, trip:{checks:{},roll:{},incidents:[]}, created:'2026-10-01', ...o, q: quote(bus, {start:o.start,end:o.end,pickup:o.pickup,dest:o.dest,addons:o.addons||{ins:true,escort:false}}, 15)}; };
+  const bookings = [
+    mkB({id:'k1', ref:'BG-24117', bus:'b1', customer:'Ntinda Parents Association', contact:'0701 223 900', start:'2026-10-17', end:'2026-10-17', pickup:'Kampala', dest:'Entebbe', pax:30, purpose:'School trip', status:'completed', rated:true}),
+    mkB({id:'k2', ref:'BG-24260', bus:'b2', customer:'Bright Future Sacco', contact:'0752 600 118', start:'2026-10-24', end:'2026-10-24', pickup:'Kampala', dest:'Jinja', pax:52, purpose:'Corporate staff trip', status:'completed', rated:true}),
+    mkB({id:'k3', ref:'BG-24391', bus:'b1', customer:'Mukono Grace High School', contact:'0782 115 404', start:'2026-11-07', end:'2026-11-07', pickup:'Mukono', dest:'Kampala', pax:30, purpose:'School trip', note:'Inter-school athletics at Namboole stadium', status:'confirmed'}),
+    mkB({id:'k4', ref:'BG-24455', bus:'b1', customer:ME.org, me:true, contact:ME.phone, start:'2026-12-12', end:'2026-12-13', pickup:'Kampala', dest:'Jinja', pax:28, purpose:'Church event', note:'Youth retreat', status:'requested', created:'2026-10-30'}),
+    mkB({id:'k5', ref:'BG-24302', bus:'b4', customer:ME.org, me:true, contact:ME.phone, start:'2026-10-25', end:'2026-10-25', pickup:'Kampala', dest:'Entebbe', pax:22, purpose:'Church event', status:'completed', rated:false})
+  ];
+  const jobs = [
+    {id:'j1', bus:'b10', type:'Listing inspection', funding:'platform', due:'2026-11-02', status:'open'},
+    {id:'j2', bus:'b4', type:'Weekly check', funding:'school', due:'2026-11-03', status:'open', cost:60000},
+    {id:'j3', bus:'b1', type:'Listing inspection', funding:'platform', due:'2026-10-24', status:'done', outcome:'pass', done:'2026-10-24'},
+    {id:'j4', bus:'b1', type:'Weekly check', funding:'reward', due:'2026-10-02', status:'done', outcome:'pass', done:'2026-10-02', cost:60000}
+  ];
+  const mechanics = [
+    {id:'m1', name:'Katwe Precision Motors', area:'Katwe, Kampala', status:'verified', rating:4.7, jobs:86},
+    {id:'m2', name:'Ndeeba Auto Garage', area:'Ndeeba, Kampala', status:'pending', docs:['Business registration','Two school references','Lead mechanic certificate']}
+  ];
+  const incidents = [{id:'i1', bus:'b8', date:'2026-10-03', type:'Breakdown', text:'Flat tyre on Jinja road. Changed in 25 minutes, trip continued.', status:'resolved'}];
+  return {schools, buses, blackouts, bookings, jobs, mechanics, incidents, settings:{commission:15, r1Trips:3, r1Days:30, r2Trips:10, r2Days:90, r2Pct:25, cap:20, checkCost:60000, driverBonus:30000}};
+}
+
+/* ============ pricing & rules ============ */
+function quote(bus, q, rate){
+  const days = Math.max(1, diff(q.start, q.end)+1);
+  let hire, basis;
+  if(days >= 30){ const m=Math.floor(days/30), r=days%30; hire = m*bus.monthly + Math.min(r*bus.daily, bus.monthly); basis = `${m} month${m>1?'s':''}${r?` + ${r} day${r>1?'s':''}`:''}`; }
+  else if(days >= 7){ const w=Math.floor(days/7), r=days%7; hire = w*bus.weekly + Math.min(r*bus.daily, bus.weekly); basis = `${w} week${w>1?'s':''}${r?` + ${r} day${r>1?'s':''}`:''}`; }
+  else { hire = days*bus.daily; basis = `${days} day${days>1?'s':''} × ${fmt(bus.daily)}`; }
+  const oneWay = roadKm(q.pickup, q.dest), km = oneWay*2, allowance = 200*days, extraKm = Math.max(0, km-allowance), kmCost = extraKm*bus.extraKm;
+  const nights = days-1, overnight = nights*bus.overnight;
+  const ins = q.addons?.ins ? 25000*days : 0, escort = q.addons?.escort ? 40000*days : 0;
+  const total = hire + kmCost + overnight + ins + escort;
+  const deposit = roundTo(total*0.3, 1000);
+  const r = rate ?? DB.settings.commission;
+  const commission = Math.round(total*r/100), driverBonus = (DB?.settings?.driverBonus ?? 30000)*days;
+  return {days, basis, hire, oneWay, km, allowance, extraKm, kmCost, nights, overnight, ins, escort, total, deposit, balance: total-deposit, rate:r, commission, driverBonus, payout: total-commission-driverBonus};
+}
+const busById = id => DB.buses.find(b => b.id===id);
+const schoolById = id => DB.schools.find(s => s.id===id);
+const ratingOf = bus => bus.reviews.length ? bus.reviews.reduce((a,r)=>a+r.stars,0)/bus.reviews.length : 0;
+const ACTIVE = ['requested','confirmed','in_progress'];
+function busDays(busId, ignore){
+  const blackout = new Set(DB.blackouts[busId]||[]), booked = new Set(), requested = new Set();
+  DB.bookings.filter(k => k.bus===busId && ACTIVE.includes(k.status) && k.id!==ignore).forEach(k => range(k.start,k.end).forEach(d => (k.status==='requested'?requested:booked).add(d)));
+  return {blackout, booked, requested};
+}
+function conflict(busId, start, end){
+  const {blackout, booked, requested} = busDays(busId);
+  for(const d of range(start, end)){
+    if(blackout.has(d)) return {type:'blackout', date:d, text:`The school uses this bus on ${fmtDate(d)}.`};
+    if(booked.has(d) || requested.has(d)) return {type:'booked', date:d, text:`Already booked on ${fmtDate(d)}.`};
+  }
+  return null;
+}
+function nextOpen(busId){
+  const {blackout, booked, requested} = busDays(busId); const out=[];
+  for(let d=addDays(TODAY,1); out.length<3 && d<'2027-03-01'; d=addDays(d,1)) if(!blackout.has(d)&&!booked.has(d)&&!requested.has(d)) out.push(d);
+  return out;
+}
+function refundFor(k){
+  const daysTo = diff(TODAY, k.start);
+  if(daysTo >= 14) return {pct:100, label:'Full deposit refund (14+ days before the trip)'};
+  if(daysTo >= 7) return {pct:50, label:'Half the deposit refunded (7 to 13 days before)'};
+  return {pct:0, label:'Deposit is kept (under 7 days before)'};
+}
+const inspectedDaysAgo = b => b.inspection ? diff(b.inspection, TODAY) : 999;
+function tripsInWindow(s, days, since){ return s.trips.filter(t => diff(t, TODAY) < days && (!since || t > since)).length; }
+function mechanicName(){ return DB.mechanics[0].name; }
+
+/* ============ state ============ */
+let DB;
+function load(){ try{ const raw = localStorage.getItem(STORE); if(raw){ DB = JSON.parse(raw); return; } }catch(e){} DB = seed(); }
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(DB)); }catch(e){} }
+load();
+
+const S = {
+  role:'hire',
+  hire:{view:'list', busId:null, step:1, moreFilters:false, signer:'', agree:false, method:'mtn', phone:ME.phone, paying:false, lastId:null, err:null},
+  search:{start:'2026-12-05', end:'2026-12-06', pickup:'Kampala', dest:'Jinja', pax:28, purpose:'Church event'},
+  filters:{seats:null, ac:false, belts:false, gps:false, fresh:false, selfDrive:false, maxPrice:0, minRating:0},
+  draft:{addons:{ins:true, escort:false}},
+  school:{tab:'overview', adding:false, calBus:'b1', calMonth:0, newBus:{model:'', plate:'', seats:33, year:2018, ac:false, belts:true, gps:false, daily:'', driver:''}},
+  driver:{step:'login', trip:null},
+  mech:{tab:'open', job:null, form:{}},
+  admin:{tab:'overview'}
+};
+const ROLES = [
+  {id:'hire', label:'Hire a bus', icon:'bus'},
+  {id:'school', label:'School', icon:'school'},
+  {id:'driver', label:'Driver', icon:'driver'},
+  {id:'mechanic', label:'Mechanic', icon:'wrench'},
+  {id:'admin', label:'Admin', icon:'admin'}
+];
+
+/* ============ toast & modal ============ */
+function toast(text, via){
+  const el = document.createElement('div'); el.className='toast';
+  el.innerHTML = `${ic(via?'chat':'check',18)}<div>${via?`<div class="via">${esc(via)}</div>`:''}${text}</div>`;
+  $('#toasts').appendChild(el); setTimeout(()=>el.remove(), 4200);
+}
+let modalOnSubmit = null;
+function openModal(html, onSubmit){ modalOnSubmit = onSubmit; $('#modal').innerHTML = `<div class="scrim" data-act="close-modal-bg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`; const f = $('#modal input, #modal textarea, #modal select, #modal .btn.primary'); f && f.focus(); }
+function closeModal(){ $('#modal').innerHTML=''; modalOnSubmit=null; }
+
+/* ============ render root ============ */
+function render(){
+  $('#roles').innerHTML = ROLES.map(r => {
+    let badge = '';
+    if(r.id==='school'){ const n = DB.bookings.filter(k=>k.status==='requested' && busById(k.bus).school==='s1').length; if(n) badge = `<span class="count">${n}</span>`; }
+    if(r.id==='admin'){ const n = pendingApprovals().length; if(n) badge = `<span class="count">${n}</span>`; }
+    if(r.id==='mechanic'){ const n = DB.jobs.filter(j=>j.status==='open').length; if(n) badge = `<span class="count">${n}</span>`; }
+    return `<button class="role" data-act="role" data-id="${r.id}" ${S.role===r.id?'aria-current="page"':''}>${ic(r.icon)}${r.label}${badge}</button>`;
+  }).join('');
+  const views = {hire:renderHire, school:renderSchool, driver:renderDriver, mechanic:renderMech, admin:renderAdmin};
+  $('#app').innerHTML = views[S.role]();
+  bindCalendarPaint();
+}
+function setRole(r){ S.role = r; if(location.hash !== '#'+r) history.replaceState(null,'','#'+r); render(); window.scrollTo({top:0}); }
+
+/* ============ HIRE (customer) ============ */
+function renderHire(){
+  const h = S.hire;
+  if(h.view==='detail') return hireDetail();
+  if(h.view==='book') return hireBook();
+  if(h.view==='done') return hireDone();
+  if(h.view==='trips') return hireTrips();
+  return hireList();
+}
+function searchBar(){
+  const s = S.search;
+  const opt = (arr, v) => arr.map(x => `<option ${x==v?'selected':''}>${x}</option>`).join('');
+  return `<form class="search" data-form="search">
+    <label class="f" for="s-start">From<input class="inp" type="date" id="s-start" data-bind="search.start" value="${s.start}" min="${addDays(TODAY,1)}"></label>
+    <label class="f" for="s-end">To<input class="inp" type="date" id="s-end" data-bind="search.end" value="${s.end}" min="${s.start}"></label>
+    <label class="f" for="s-pickup">Pickup<select class="inp" id="s-pickup" data-bind="search.pickup">${opt(PICKUPS, s.pickup)}</select></label>
+    <label class="f" for="s-dest">Destination<select class="inp" id="s-dest" data-bind="search.dest">${opt(Object.keys(TOWNS), s.dest)}</select></label>
+    <label class="f" for="s-pax">People<input class="inp num" type="number" id="s-pax" min="1" max="60" data-bind="search.pax" value="${s.pax}"></label>
+    <label class="f" for="s-purpose">Trip purpose<select class="inp" id="s-purpose" data-bind="search.purpose">${opt(PURPOSES, s.purpose)}</select></label>
+    <button class="btn primary lg go" type="submit">Search</button>
+  </form>`;
+}
+function filteredBuses(){
+  const f = S.filters, s = S.search;
+  let list = DB.buses.filter(b => b.status==='listed' && schoolById(b.school).status==='verified');
+  list = list.filter(b => b.seats >= (+s.pax||1));
+  if(f.seats) list = list.filter(b => b.seats===f.seats);
+  if(f.ac) list = list.filter(b=>b.ac); if(f.belts) list = list.filter(b=>b.belts); if(f.gps) list = list.filter(b=>b.gps);
+  if(f.fresh) list = list.filter(b => inspectedDaysAgo(b) <= 30);
+  if(f.selfDrive) list = list.filter(b => b.selfDrive);
+  if(f.maxPrice) list = list.filter(b => b.daily <= f.maxPrice);
+  if(f.minRating) list = list.filter(b => ratingOf(b) >= f.minRating);
+  const score = b => (conflict(b.id, s.start, s.end)?0:100) + ratingOf(b)*10 - Math.min(inspectedDaysAgo(b),120)/30 - (b.seats - s.pax)/20;
+  return list.sort((a,b) => score(b)-score(a));
+}
+function busCard(b){
+  const s = S.search, c = conflict(b.id, s.start, s.end), sc = schoolById(b.school), r = ratingOf(b);
+  const feats = [b.ac&&'AC', b.belts&&'Seatbelts', b.gps&&'GPS tracked'].filter(Boolean);
+  return `<button class="bus ${c?'off':''}" data-act="open-bus" data-id="${b.id}">
+    ${busArt(b)}
+    <div class="body">
+      <div class="row between"><h3>${b.seats}-seat ${esc(b.model)}</h3><span class="small num">${starIc()} ${r.toFixed(1)} <span class="muted">(${b.reviews.length})</span></span></div>
+      <div class="small muted">${esc(sc.name)} <span class="verified">${ic('shield',13)}Verified</span></div>
+      <div class="chips">${feats.map(x=>`<span class="pill">${x}</span>`).join('')}${inspectedDaysAgo(b)<=30?'<span class="pill ok">Inspected recently</span>':''}</div>
+      <div class="row between" style="margin-top:4px"><div class="price num">${fmt(b.daily)} <span>/ day</span></div></div>
+      <div class="small ${c?'muted':''}" style="${c?'':'color:var(--ok);font-weight:600'}">${c ? esc(c.text) + ' Next open: ' + nextOpen(b.id).slice(0,2).map(d=>fmtDate(d)).join(', ') : 'Available on your dates'}</div>
+    </div>
+  </button>`;
+}
+function hireList(){
+  const f = S.filters, list = filteredBuses(), avail = list.filter(b=>!conflict(b.id,S.search.start,S.search.end)).length;
+  const myTrips = DB.bookings.filter(k=>k.me).length;
+  const programmes = [
+    {t:'Source of the Nile day trip', d:'Jinja · transport, guide and lunch', p:'UGX 85,000 per child'},
+    {t:'Entebbe Zoo and Botanical Gardens', d:'Entebbe · half day, all ages', p:'UGX 60,000 per child'},
+    {t:'December revision camp', d:'2 weeks · daily pickup and drop-off', p:'UGX 450,000 per child'},
+    {t:'Holiday pickup for working parents', d:'Kampala · weekdays in December', p:'UGX 180,000 per month'}
+  ];
+  const conv = [
+    {t:'Mobile podcast studio', d:'60-seater, soundproofed, power fitted', p:'From UGX 9.5M / month'},
+    {t:'Mobile classroom or library', d:'33 to 60 seats, desks and shelving', p:'From UGX 7M / month'},
+    {t:'Health outreach unit', d:'Screening room and waiting area', p:'From UGX 8M / month'},
+    {t:'Pop-up retail or exhibition', d:'Branded wrap available', p:'From UGX 6.5M / month'}
+  ];
+  return `
+  <section class="hero">
+    <div class="row between">
+      <h1>Hire a <em>safe, inspected</em> bus from a school near you</h1>
+      <button class="btn" data-act="my-trips">${ic('route')}My trips${myTrips?` · ${myTrips}`:''}</button>
+    </div>
+    <p class="muted">Every bus is checked by a vetted mechanic and insured. You pay by mobile money, and we hold it until your trip is done.</p>
+  </section>
+  ${searchBar()}
+  <section class="stack">
+    <div class="row between">
+      <div class="chips" role="group" aria-label="Seat size">
+        <button class="chip" data-act="seat" data-id="" aria-pressed="${!f.seats}">Any size</button>
+        ${SEAT_SIZES.map(n=>`<button class="chip" data-act="seat" data-id="${n}" aria-pressed="${f.seats===n}">${n} seats</button>`).join('')}
+      </div>
+      <button class="link small" data-act="more-filters">${S.hire.moreFilters?'Fewer filters':'More filters'}</button>
+    </div>
+    ${S.hire.moreFilters ? `<div class="card flat stack s">
+      <div class="chips">
+        ${[['ac','Air-conditioned'],['belts','Seatbelts'],['gps','GPS tracked'],['fresh','Inspected in last 30 days'],['selfDrive','Without driver']].map(([k,l])=>`<button class="chip" data-act="toggle-filter" data-id="${k}" aria-pressed="${f[k]}">${l}</button>`).join('')}
+      </div>
+      <div class="row">
+        <label class="f" for="f-max">Max price per day<select class="inp" id="f-max" data-bind="filters.maxPrice" data-num>
+          ${[[0,'Any'],[500000,'Up to UGX 500k'],[800000,'Up to UGX 800k'],[1200000,'Up to UGX 1.2M']].map(([v,l])=>`<option value="${v}" ${f.maxPrice==v?'selected':''}>${l}</option>`).join('')}</select></label>
+        <label class="f" for="f-rate">Rating<select class="inp" id="f-rate" data-bind="filters.minRating" data-num>
+          ${[[0,'Any'],[4,'4.0 and up'],[4.5,'4.5 and up']].map(([v,l])=>`<option value="${v}" ${f.minRating==v?'selected':''}>${l}</option>`).join('')}</select></label>
+      </div>
+    </div>`:''}
+    <div class="small muted">${list.length} bus${list.length===1?'':'es'} for ${S.search.pax} people · ${avail} free on ${esc(fmtRange(S.search.start,S.search.end))}. Ranked by availability, rating and inspection date.</div>
+    ${list.length ? `<div class="results">${list.map(busCard).join('')}</div>` : `<div class="card flat">No bus matches these filters. Try a smaller group size or clear a filter.</div>`}
+  </section>
+  <section class="stack">
+    <div class="section-h"><h2>Holiday programmes and school trips</h2><span class="small muted">Packaged by Bus&amp;Go, transport included</span></div>
+    <div class="hscroll">${programmes.map(p=>`<button class="mini-card" data-act="enquire" data-kind="programme" data-id="${esc(p.t)}"><span class="pill acc" style="align-self:flex-start">Programme</span><h3>${p.t}</h3><span class="small muted">${p.d}</span><b class="small">${p.p}</b></button>`).join('')}</div>
+  </section>
+  <section class="stack">
+    <div class="section-h"><h2>Special projects</h2><span class="small muted">Convert a bus for a month. Restored to original after.</span></div>
+    <div class="hscroll">${conv.map(p=>`<button class="mini-card" data-act="enquire" data-kind="conversion" data-id="${esc(p.t)}"><span class="pill info" style="align-self:flex-start">Conversion</span><h3>${p.t}</h3><span class="small muted">${p.d}</span><b class="small">${p.p}</b><span class="tiny muted">+ conversion and restoration fee</span></button>`).join('')}</div>
+  </section>`;
+}
+function calendarHtml(busId, months, opts={}){
+  const {blackout, booked, requested} = busDays(busId);
+  const out = months.map(([y,m]) => {
+    const first = new Date(y,m,1), pad = (first.getDay()+6)%7, nd = new Date(y,m+1,0).getDate();
+    let cells = ['M','T','W','T','F','S','S'].map(d=>`<div class="dow">${d}</div>`).join('') + '<div></div>'.repeat(pad);
+    for(let i=1;i<=nd;i++){
+      const d = iso(new Date(y,m,i)); let cls='day';
+      if(d<=TODAY) cls+=' past'; else if(booked.has(d)) cls+=' bkd'; else if(requested.has(d)) cls+=' req'; else if(blackout.has(d)) cls+=' blk';
+      if(opts.sel && d>=opts.sel[0] && d<=opts.sel[1]) cls+=' sel';
+      const editable = opts.edit && d>TODAY && !booked.has(d) && !requested.has(d);
+      cells += `<div class="${cls}${editable?' ed':''}" ${editable?`data-day="${d}"`:''} title="${fmtDate(d)}">${i}</div>`;
+    }
+    return `<div><div class="cal-h">${first.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}</div><div class="cal-g ${opts.edit?'edit':''}" ${opts.edit?`data-cal="${busId}"`:''}>${cells}</div></div>`;
+  }).join('');
+  return `<div class="cals">${out}</div>
+  <div class="legend"><span><i style="background:var(--ok-soft);border:1px solid #bfe2cc"></i>Open for hire</span><span><i style="background:repeating-linear-gradient(135deg,#dfe2e6 0 3px,#f6f7f9 3px 6px)"></i>School use</span><span><i style="background:var(--ink)"></i>Booked</span><span><i style="background:var(--info-soft);border:1px solid #c9d7f1"></i>Requested</span>${opts.sel?'<span><i style="outline:2px solid var(--accent);outline-offset:-2px"></i>Your dates</span>':''}</div>`;
+}
+function monthsFrom(offset, n){ const out=[]; for(let i=0;i<n;i++){ const d=new Date(2026, 10+offset+i, 1); out.push([d.getFullYear(), d.getMonth()]); } return out; }
+function hireDetail(){
+  const b = busById(S.hire.busId), sc = schoolById(b.school), r = ratingOf(b), s = S.search;
+  const c = conflict(b.id, s.start, s.end), q = quote(b, {...s, addons:S.draft.addons});
+  const fresh = inspectedDaysAgo(b);
+  const feats = [['snow','Air-conditioning',b.ac],['belt','Seatbelts on every seat',b.belts],['gps','GPS tracker',b.gps],['users',`${b.seats} seats`,true]];
+  return `
+  <button class="link" data-act="back-list">${ic('back')}All buses</button>
+  <div class="split">
+    <div class="stack l">
+      <div class="stack s">
+        ${busArt(b, true)}
+        <div class="row tiny muted">${ic('camera',14)} 6 photos from ${esc(sc.name)} · illustration shown in demo</div>
+      </div>
+      <div class="stack s">
+        <h1>${b.seats}-seat ${esc(b.model)}</h1>
+        <div class="row small"><span>${esc(sc.name)}</span><span class="verified">${ic('shield',14)}Verified school</span><span class="muted">·</span><span class="num">${starIc()} ${r.toFixed(1)} (${b.reviews.length} reviews)</span><span class="muted">·</span><span class="muted">${esc(sc.area)}</span></div>
+      </div>
+      <div class="grid g4">
+        <div class="tile"><span class="l">Seats</span><span class="v">${b.seats}</span></div>
+        <div class="tile"><span class="l">Year</span><span class="v">${b.year}</span></div>
+        <div class="tile"><span class="l">Plate</span><span class="v" style="font-size:18px">${esc(b.plate)}</span></div>
+        <div class="tile"><span class="l">Driver</span><span class="v" style="font-size:18px">${b.selfDrive?'Optional':'Included'}</span></div>
+      </div>
+      <div class="stack s">
+        <h2>Features</h2>
+        <div class="chips">${feats.map(([i,l,on])=>`<span class="pill ${on?'':'bad'}">${ic(on?i:'x',13)}${on?l:'No '+l.toLowerCase()}</span>`).join('')}</div>
+      </div>
+      <div class="stack s">
+        <h2>Safety and documents</h2>
+        <div class="list">
+          <div class="li"><div class="main"><b>Mechanic inspection</b><span class="small muted">Passed ${fmtDate(b.inspection,true)} · ${esc(mechanicName())}</span></div><span class="pill ${fresh<=30?'ok':fresh<=90?'warn':'bad'} dot">${fresh<=30?'Up to date':fresh<=90?`${fresh} days ago`:'Overdue'}</span></div>
+          <div class="li"><div class="main"><b>Insurance</b><span class="small muted">${esc(b.insurer)} · valid until ${fmtDate(b.insurance,true)}</span></div><span class="pill ok dot">Confirmed</span></div>
+          <div class="li"><div class="main"><b>Driver: ${esc(b.driver.name)}</b><span class="small muted">${b.driver.years} years driving · ${b.driver.trips} trips · licence and background checked</span></div><span class="verified">${ic('shield',14)}Verified</span></div>
+        </div>
+      </div>
+      <div class="stack s">
+        <h2>Availability</h2>
+        <p class="small muted">The school's own use comes first. Striped days are blocked for school runs.</p>
+        ${calendarHtml(b.id, monthsFrom(0,2), {sel:[s.start,s.end]})}
+      </div>
+      <div class="stack s">
+        <h2>Reviews</h2>
+        ${b.reviews.length ? `<div class="list">${b.reviews.map(rv=>`<div class="li"><div class="main"><div class="row"><b>${esc(rv.by)}</b><span class="small num">${starIc(13).repeat(rv.stars)}</span></div><span>${esc(rv.text)}</span></div><span class="tiny muted">${fmtDate(rv.date)}</span></div>`).join('')}</div>` : '<p class="muted">No reviews yet.</p>'}
+      </div>
+    </div>
+    <aside class="card stack sticky">
+      <div class="price num" style="font-size:22px">${fmt(b.daily)} <span>/ day</span></div>
+      <div>
+        <div class="kv small"><span class="muted">Per week</span><b class="num">${fmt(b.weekly)}</b></div>
+        <div class="kv small"><span class="muted">Per month</span><b class="num">${fmt(b.monthly)}</b></div>
+        <div class="kv small"><span class="muted">Extra km (over 200 km/day)</span><b class="num">${fmt(b.extraKm)}</b></div>
+        <div class="kv small"><span class="muted">Overnight driver allowance</span><b class="num">${fmt(b.overnight)}</b></div>
+      </div>
+      <hr class="sep">
+      <div class="small"><b>${esc(fmtRange(s.start,s.end))}</b> · ${esc(s.pickup)} → ${esc(s.dest)} · ${s.pax} people</div>
+      ${c ? `<div class="notice warn">${ic('alert',18)}<div>${esc(c.text)} Change your dates to book.</div></div>` : `<div class="kv total"><span>Estimated total</span><span class="num">${fmt(q.total)}</span></div><div class="tiny muted">Deposit today: ${fmt(q.deposit)}</div>`}
+      <button class="btn primary lg block" data-act="start-book" ${c?'':''}>Book now</button>
+      <button class="btn block" data-act="quote-req">Request a quote</button>
+      <div class="tiny muted">Payment is held by Bus&amp;Go until the trip is complete.</div>
+    </aside>
+  </div>`;
+}
+function stepper(n){
+  const names = ['Trip','Price','Agreement','Pay'];
+  return `<div class="steps">${names.map((t,i)=>`<div class="step ${i+1===n?'on':i+1<n?'done':''}"><b>${i+1<n?ic('check',13):i+1}</b>${t}</div>`).join('')}</div>`;
+}
+function bookFlags(b){
+  const s = S.search, flags = [];
+  if(s.purpose==='Special conversion project') flags.push('Conversion projects need school and insurer approval, condition photos and a restoration deposit. We will contact you before any payment is taken.');
+  if(roadKm(s.pickup,s.dest) > 250) flags.push(`Long-distance trip (${roadKm(s.pickup,s.dest)} km one way). The school must approve the route, and we add a second driver check.`);
+  if(s.pax > b.seats) flags.push(`This bus has ${b.seats} seats. Reduce the group to ${b.seats} or pick a bigger bus.`);
+  return flags;
+}
+function hireBook(){
+  const b = busById(S.hire.busId), s = S.search, h = S.hire, q = quote(b, {...s, addons:S.draft.addons}), sc = schoolById(b.school);
+  const opt = (arr, v) => arr.map(x => `<option ${x==v?'selected':''}>${x}</option>`).join('');
+  let body = '';
+  if(h.step===1){
+    const c = conflict(b.id, s.start, s.end), flags = bookFlags(b);
+    body = `<h2>Where and when?</h2>
+      <div class="grid g2">
+        <label class="f" for="b-start">First day<input class="inp" type="date" id="b-start" data-bind="search.start" value="${s.start}" min="${addDays(TODAY,1)}"></label>
+        <label class="f" for="b-end">Last day<input class="inp" type="date" id="b-end" data-bind="search.end" value="${s.end}" min="${s.start}"></label>
+        <label class="f" for="b-pickup">Pickup<select class="inp" id="b-pickup" data-bind="search.pickup">${opt(PICKUPS, s.pickup)}</select></label>
+        <label class="f" for="b-dest">Destination<select class="inp" id="b-dest" data-bind="search.dest">${opt(Object.keys(TOWNS), s.dest)}</select></label>
+        <label class="f" for="b-pax">Number of people<input class="inp num" type="number" id="b-pax" min="1" max="60" data-bind="search.pax" value="${s.pax}"></label>
+        <label class="f" for="b-purpose">Trip purpose<select class="inp" id="b-purpose" data-bind="search.purpose">${opt(PURPOSES, s.purpose)}</select></label>
+      </div>
+      ${c?`<div class="notice bad">${ic('alert',18)}<div><b>${esc(c.text)}</b> Blocked days can't be booked. Next open days: ${nextOpen(b.id).map(d=>fmtDate(d)).join(', ')}.</div></div>`:''}
+      ${flags.map(f=>`<div class="notice warn">${ic('alert',18)}<div>${esc(f)}</div></div>`).join('')}
+      <div class="row between"><button class="btn" data-act="back-detail">Back</button><button class="btn primary" data-act="book-next" ${c||s.pax>b.seats||s.end<s.start?'disabled':''}>See price</button></div>`;
+  } else if(h.step===2){
+    body = `<h2>Price breakdown</h2>
+      <div>
+        <div class="kv"><span>Bus hire · ${esc(q.basis)}</span><b class="num">${fmt(q.hire)}</b></div>
+        <div class="kv"><span>Distance · ${q.km} km round trip, ${q.allowance} km included${q.extraKm?` · ${q.extraKm} km extra`:''}</span><b class="num">${q.kmCost?fmt(q.kmCost):'Included'}</b></div>
+        <div class="kv"><span>Driver · ${esc(b.driver.name)}</span><b class="num">Included</b></div>
+        ${q.nights?`<div class="kv"><span>Overnight allowance · ${q.nights} night${q.nights>1?'s':''}</span><b class="num">${fmt(q.overnight)}</b></div>`:''}
+        <div class="kv"><span>Fuel policy</span><b>Included up to allowance</b></div>
+        ${q.ins?`<div class="kv"><span>Trip insurance · ${q.days} day${q.days>1?'s':''}</span><b class="num">${fmt(q.ins)}</b></div>`:''}
+        ${q.escort?`<div class="kv"><span>Second adult escort</span><b class="num">${fmt(q.escort)}</b></div>`:''}
+        <div class="kv total"><span>Total</span><span class="num">${fmt(q.total)}</span></div>
+        <div class="kv"><span>Pay now (30% deposit)</span><b class="num">${fmt(q.deposit)}</b></div>
+        <div class="kv"><span class="muted">Balance, due 48 hours before the trip</span><span class="num muted">${fmt(q.balance)}</span></div>
+      </div>
+      <div class="stack s">
+        <h4>Add-ons</h4>
+        <label class="chk"><input type="checkbox" id="ad-ins" data-addon="ins" ${S.draft.addons.ins?'checked':''}><span>Trip insurance for passengers · UGX 25,000 per day</span></label>
+        <label class="chk"><input type="checkbox" id="ad-esc" data-addon="escort" ${S.draft.addons.escort?'checked':''}><span>Second adult escort (recommended for children) · UGX 40,000 per day</span></label>
+      </div>
+      <div class="card flat small stack s"><b>Cancellation policy</b>
+        <span>14 or more days before: full deposit refund. 7 to 13 days: half the deposit. Under 7 days: deposit is kept.</span></div>
+      <div class="row between"><button class="btn" data-act="book-prev">Back</button><button class="btn primary" data-act="book-next">Continue</button></div>`;
+  } else if(h.step===3){
+    body = `<h2>Hire agreement</h2>
+      <div class="card flat small stack s" style="max-height:220px;overflow:auto">
+        <b>Bus hire agreement between ${esc(ME.org)} and ${esc(sc.name)}, arranged by Bus&amp;Go Ltd</b>
+        <span>1. The school provides the ${b.seats}-seat ${esc(b.model)} (${esc(b.plate)}) with driver ${esc(b.driver.name)} from ${esc(fmtRange(s.start,s.end))}.</span>
+        <span>2. The hirer will not carry more than ${b.seats} passengers, and every passenger wears a seatbelt where fitted.</span>
+        <span>3. The driver may refuse any unsafe route, load or behaviour. Alcohol is not allowed on board for school-age groups.</span>
+        <span>4. Bus&amp;Go holds all payments until the trip is complete, then pays the school.</span>
+        <span>5. Damage caused by passengers is charged to the hirer after a mechanic assessment with photos.</span>
+        <span>6. Cancellation refunds follow the tiered policy shown at checkout.</span>
+      </div>
+      <label class="f" for="sig">Type your full name to sign<input class="inp" id="sig" data-text="hire.signer" value="${esc(h.signer)}" placeholder="${esc(ME.name)}"></label>
+      <label class="chk"><input type="checkbox" id="agree" data-check="hire.agree" ${h.agree?'checked':''}><span>I have read and accept the hire agreement and cancellation policy.</span></label>
+      <div class="row between"><button class="btn" data-act="book-prev">Back</button><button class="btn primary" data-act="book-next" id="sign-btn" ${h.agree&&h.signer.trim().length>2?'':'disabled'}>Sign and continue</button></div>`;
+  } else {
+    const methods = [['mtn','MTN Mobile Money'],['airtel','Airtel Money'],['card','Card']];
+    body = `<h2>Pay the deposit</h2>
+      <div class="grid g3">${methods.map(([k,l])=>`<button class="chip" style="justify-content:center;padding:12px" data-act="method" data-id="${k}" aria-pressed="${h.method===k}">${l}</button>`).join('')}</div>
+      ${h.method==='card' ? `<div class="grid g2"><label class="f" for="cn">Card number<input class="inp num" id="cn" value="4242 4242 4242 4242"></label><label class="f" for="ce">Expiry<input class="inp num" id="ce" value="08 / 28"></label></div>`
+        : `<label class="f" for="mm">${h.method==='mtn'?'MTN':'Airtel'} number<input class="inp num" id="mm" data-text="hire.phone" value="${esc(h.phone)}"></label>`}
+      <div class="kv total"><span>Deposit</span><span class="num">${fmt(q.deposit)}</span></div>
+      ${h.paying?`<div class="notice info">${ic('phone',18)}<div>Approve the payment prompt on ${esc(h.phone)}…</div></div>`:''}
+      <div class="row between"><button class="btn" data-act="book-prev" ${h.paying?'disabled':''}>Back</button><button class="btn primary lg" data-act="pay" ${h.paying?'disabled':''}>${h.paying?'<span class="spin"></span>Waiting for approval':`Pay ${fmt(q.deposit)}`}</button></div>
+      <p class="tiny muted">Demo payment. No money moves.</p>`;
+  }
+  return `<button class="link" data-act="back-detail">${ic('back')}Back to bus</button>
+  <div class="split">
+    <div class="card stack">${stepper(h.step)}${body}</div>
+    <aside class="card stack sticky">
+      ${busArt(b)}
+      <div><h3>${b.seats}-seat ${esc(b.model)}</h3><div class="small muted">${esc(sc.name)}</div></div>
+      <hr class="sep">
+      <div class="small stack s">
+        <div class="row">${ic('cal')}${esc(fmtRange(s.start,s.end))}</div>
+        <div class="row">${ic('pin')}${esc(s.pickup)} → ${esc(s.dest)}</div>
+        <div class="row">${ic('users')}${s.pax} people · ${esc(s.purpose)}</div>
+      </div>
+      <div class="kv total"><span>Total</span><span class="num">${fmt(q.total)}</span></div>
+    </aside>
+  </div>`;
+}
+function hireDone(){
+  const k = DB.bookings.find(x=>x.id===S.hire.lastId), b = busById(k.bus), sc = schoolById(b.school);
+  return `<div class="card stack" style="max-width:620px;margin:0 auto;width:100%">
+    <div class="row"><span class="pill ok dot">Deposit paid · held by Bus&amp;Go</span></div>
+    <h1>Booking sent to ${esc(sc.name)}</h1>
+    <p class="muted">Your trip reference is <b style="color:var(--ink)">${k.ref}</b>. The school usually answers within a few hours. We will message you on WhatsApp and SMS.</p>
+    <div class="list">
+      <div class="li"><div class="main"><span class="small muted">Bus</span><b>${b.seats}-seat ${esc(b.model)} · ${esc(b.plate)}</b></div></div>
+      <div class="li"><div class="main"><span class="small muted">Driver</span><b>${esc(b.driver.name)} <span class="verified">${ic('shield',13)}Verified</span></b></div></div>
+      <div class="li"><div class="main"><span class="small muted">Trip</span><b>${esc(fmtRange(k.start,k.end))} · ${esc(k.pickup)} → ${esc(k.dest)}</b></div></div>
+      <div class="li"><div class="main"><span class="small muted">Paid now / balance</span><b class="num">${fmt(k.q.deposit)} / ${fmt(k.q.balance)}</b></div></div>
+    </div>
+    <div class="notice info">${ic('phone',18)}<div>Support line: 0800 287 446 (free) · Emergency during a trip: 0393 228 000</div></div>
+    <div class="row"><button class="btn primary" data-act="my-trips">View my trips</button><button class="btn" data-act="back-list">Find another bus</button></div>
+  </div>`;
+}
+const STATUS = {
+  requested:['Awaiting school','info'], confirmed:['Confirmed','ok'], in_progress:['On the road','acc'], completed:['Completed','ok'], declined:['Declined','bad'], cancelled:['Cancelled','']
+};
+function tripTimeline(k){
+  const order = ['requested','confirmed','in_progress','completed'], idx = order.indexOf(k.status);
+  const labels = ['Requested','Driver assigned','In progress','Completed'];
+  return `<div class="tl">${labels.map((l,i)=>`<div class="${i<=idx?'on':''}"><span class="bar"></span>${l}</div>`).join('')}</div>`;
+}
+function routeMap(k){
+  const pct = k.status==='in_progress' ? 0.55 : k.status==='completed' ? 1 : 0;
+  const x = 30 + pct*280, y = 70 - Math.sin(pct*Math.PI)*34;
+  return `<svg class="map" viewBox="0 0 340 110" role="img" aria-label="Route from ${esc(k.pickup)} to ${esc(k.dest)}">
+    <rect width="340" height="110" fill="#f5f6f8"/>
+    <path d="M0 30 Q 120 10 200 40 T 340 20" stroke="#e8eaee" stroke-width="14" fill="none"/>
+    <path d="M30 70 Q 170 2 310 70" stroke="#c9ccd2" stroke-width="3" fill="none" stroke-dasharray="6 5"/>
+    <circle cx="30" cy="70" r="6" fill="#16181d"/><circle cx="310" cy="70" r="6" fill="#fff" stroke="#16181d" stroke-width="3"/>
+    <text x="30" y="94" text-anchor="middle" font-size="11" font-family="DM Sans,sans-serif" font-weight="600" fill="#656b75">${esc(k.pickup)}</text>
+    <text x="310" y="94" text-anchor="middle" font-size="11" font-family="DM Sans,sans-serif" font-weight="600" fill="#656b75">${esc(k.dest)}</text>
+    ${pct>0&&pct<1?`<circle cx="${x}" cy="${y}" r="13" fill="#f2b705" opacity=".3"/><circle cx="${x}" cy="${y}" r="7" fill="#f2b705" stroke="#16181d" stroke-width="2"/>`:''}
+  </svg>`;
+}
+function hireTrips(){
+  const mine = DB.bookings.filter(k=>k.me).sort((a,b)=> (b.created||'').localeCompare(a.created||'') || b.start.localeCompare(a.start));
+  return `<button class="link" data-act="back-list">${ic('back')}Find a bus</button>
+  <div class="section-h"><h1>My trips</h1><span class="small muted">${esc(ME.name)} · ${esc(ME.org)}</span></div>
+  <div class="stack">${mine.map(k=>{
+    const b = busById(k.bus), sc = schoolById(b.school), [st,cls] = STATUS[k.status];
+    const canCancel = ['requested','confirmed'].includes(k.status);
+    return `<div class="card stack">
+      <div class="row between"><div class="stack s" style="gap:2px"><span class="tiny muted">${k.ref}</span><h3>${esc(k.pickup)} → ${esc(k.dest)} · ${esc(fmtRange(k.start,k.end))}</h3><span class="small muted">${b.seats}-seat ${esc(b.model)} · ${esc(sc.name)} · driver ${esc(b.driver.name)}</span></div><span class="pill ${cls} dot">${st}</span></div>
+      ${!['declined','cancelled'].includes(k.status)?tripTimeline(k):''}
+      ${k.status==='in_progress'?`${routeMap(k)}<div class="small row">${ic('gps')}Live location shared by ${esc(b.driver.name)} · updated 1 min ago</div>`:''}
+      ${k.status==='requested'?`<div class="small muted">Deposit ${fmt(k.q.deposit)} is held by Bus&amp;Go. If the school declines, it is refunded in full.</div>`:''}
+      ${k.status==='cancelled'?`<div class="small muted">${esc(k.refundNote||'')}</div>`:''}
+      <div class="row">
+        ${k.status==='completed'&&!k.rated?`<button class="btn primary sm" data-act="rate" data-id="${k.id}">${starIc(13)} Rate this trip</button>`:''}
+        ${k.status==='completed'&&k.rated?`<span class="pill ok">${ic('check',12)}Rated</span>`:''}
+        ${['completed','in_progress'].includes(k.status)?`<button class="btn sm" data-act="report" data-id="${k.id}">Report an issue</button>`:''}
+        <button class="btn sm" data-act="receipt" data-id="${k.id}">${k.status==='completed'?'Invoice and receipt':'Booking details'}</button>
+        ${canCancel?`<button class="btn sm danger" data-act="cancel" data-id="${k.id}">Cancel</button>`:''}
+      </div>
+    </div>`;}).join('')}</div>`;
+}
+
+/* ============ SCHOOL ============ */
+const MY_SCHOOL = 's1';
+function renderSchool(){
+  const sc = schoolById(MY_SCHOOL), t = S.school.tab;
+  const req = DB.bookings.filter(k=>k.status==='requested' && busById(k.bus).school===MY_SCHOOL).length;
+  const tabs = [['overview','Overview'],['fleet','Fleet'],['calendar','Calendar'],['bookings','Bookings',req],['earnings','Earnings'],['rewards','Rewards']];
+  const views = {overview:schoolOverview, fleet:schoolFleet, calendar:schoolCalendar, bookings:schoolBookings, earnings:schoolEarnings, rewards:schoolRewards};
+  return `<div class="section-h"><div class="stack s" style="gap:2px"><h1>${esc(sc.name)}</h1><span class="small muted">${esc(sc.area)} · <span class="verified">${ic('shield',13)}Verified school</span> · payouts to ${esc(sc.payout)}</span></div></div>
+  <div class="tabs" role="tablist">${tabs.map(([k,l,n])=>`<button class="tab" role="tab" data-act="school-tab" data-id="${k}" aria-selected="${t===k}">${l}${n?`<span class="count">${n}</span>`:''}</button>`).join('')}</div>
+  ${views[t]()}`;
+}
+function mySchoolBuses(){ return DB.buses.filter(b=>b.school===MY_SCHOOL); }
+function myBookings(){ const ids = mySchoolBuses().map(b=>b.id); return DB.bookings.filter(k=>ids.includes(k.bus)); }
+function complianceAlerts(){
+  const out=[];
+  mySchoolBuses().forEach(b=>{
+    const ins = diff(TODAY, b.insurance);
+    if(ins <= 30) out.push({lvl:ins<=7?'bad':'warn', text:`Insurance for ${b.plate} (${b.model}) expires on ${fmtDate(b.insurance,true)}, in ${ins} days. Upload the renewal to keep it listed.`});
+    if(b.inspection && inspectedDaysAgo(b) > 60) out.push({lvl:'warn', text:`${b.plate} was last inspected ${inspectedDaysAgo(b)} days ago.`});
+  });
+  return out;
+}
+function earnings(){
+  const ks = myBookings();
+  const released = ks.filter(k=>k.status==='completed').reduce((a,k)=>a+k.q.payout,0);
+  const held = ks.filter(k=>['confirmed','in_progress'].includes(k.status)).reduce((a,k)=>a+k.q.payout,0);
+  return {released, held};
+}
+function schoolOverview(){
+  const sc = schoolById(MY_SCHOOL), e = earnings(), alerts = complianceAlerts(), st = DB.settings;
+  const n1 = tripsInWindow(sc, st.r1Days, sc.unlock1), reqs = myBookings().filter(k=>k.status==='requested');
+  const listed = mySchoolBuses().filter(b=>b.status==='listed').length;
+  return `
+  ${alerts.map(a=>`<div class="notice ${a.lvl}">${ic('alert',18)}<div>${esc(a.text)} <button class="link" data-act="toast" data-msg="Renewal uploaded. Admin will confirm.">Upload renewal</button></div></div>`).join('')}
+  <div class="grid g4">
+    <div class="tile"><span class="l">Paid out to you</span><span class="v">${fmtK(e.released)}</span></div>
+    <div class="tile"><span class="l">Held until trips finish</span><span class="v">${fmtK(e.held)}</span></div>
+    <div class="tile"><span class="l">Buses listed</span><span class="v">${listed} of ${mySchoolBuses().length}</span></div>
+    <div class="tile"><span class="l">Requests waiting</span><span class="v">${reqs.length}</span></div>
+  </div>
+  <div class="grid g2">
+    <div class="card stack">
+      <div class="row between"><h3>Next reward</h3><span class="pill acc">${ic('gift',13)}Free weekly check</span></div>
+      <div class="progress ${n1>=st.r1Trips?'done':''}"><i style="width:${Math.min(100,n1/st.r1Trips*100)}%"></i></div>
+      <p class="small">${n1>=st.r1Trips?'Unlocked. Book your free check in Rewards.':`<b>${n1} of ${st.r1Trips}</b> paid trips in the last ${st.r1Days} days. ${st.r1Trips-n1} more trip${st.r1Trips-n1>1?'s':''} unlocks a free weekly maintenance check.`}</p>
+      <button class="link small" data-act="school-tab" data-id="rewards">See all rewards ${ic('next',14)}</button>
+    </div>
+    <div class="card stack">
+      <h3>Booking requests</h3>
+      ${reqs.length?reqs.map(k=>`<div class="row between"><div class="small"><b>${esc(k.customer)}</b><br><span class="muted">${esc(fmtRange(k.start,k.end))} · ${esc(busById(k.bus).plate)}</span></div><button class="btn sm primary" data-act="school-tab" data-id="bookings">Review</button></div>`).join(''):'<p class="small muted">No requests right now.</p>'}
+    </div>
+  </div>`;
+}
+function verifySteps(b){
+  const steps = [['Documents',true],['Mechanic inspection',['pending_approval','listed'].includes(b.status)],['Admin approval',b.status==='listed'],['Listed',b.status==='listed']];
+  return `<div class="steps">${steps.map(([l,d],i)=>`<div class="step ${d?'done':''} ${!d&&(i===0||steps[i-1][1])?'on':''}"><b>${d?ic('check',13):i+1}</b>${l}</div>`).join('')}</div>`;
+}
+const BUS_STATUS = {listed:['Listed','ok'], pending_inspection:['Waiting for inspection','warn'], pending_approval:['Waiting for admin approval','info'], inspection_failed:['Failed inspection','bad'], rejected:['Rejected','bad'], suspended:['Suspended','bad']};
+function schoolFleet(){
+  if(S.school.adding) return addBusForm();
+  return `<div class="row between"><p class="muted small">A bus appears in search only after a platform mechanic inspects it and our team confirms the documents.</p><button class="btn primary" data-act="add-bus">${ic('plus')}Add a bus</button></div>
+  <div class="stack">${mySchoolBuses().map(b=>{ const [l,c] = BUS_STATUS[b.status]; return `<div class="card">
+    <div class="row" style="align-items:flex-start;gap:16px">
+      <div style="width:170px;flex:none">${busArt(b)}</div>
+      <div class="stack s" style="flex:1;min-width:220px">
+        <div class="row between"><h3>${b.seats}-seat ${esc(b.model)} · ${esc(b.plate)}</h3><span class="pill ${c} dot">${l}</span></div>
+        <div class="small muted">${b.year} · ${[b.ac&&'AC',b.belts&&'Seatbelts',b.gps&&'GPS'].filter(Boolean).join(' · ')} · Driver ${esc(b.driver.name)}</div>
+        <div class="small num">${fmt(b.daily)} / day · ${fmt(b.weekly)} / week · ${fmt(b.monthly)} / month</div>
+        ${b.status!=='listed'?verifySteps(b):`<div class="small muted">Inspected ${fmtDate(b.inspection,true)} · Insured until ${fmtDate(b.insurance,true)} · ${starIc(13)} ${ratingOf(b).toFixed(1)}</div>`}
+        ${b.status==='inspection_failed'?`<div class="notice bad small">${ic('alert',16)}<div>${esc(b.failNote||'Some items failed. Fix them and request a new inspection.')}</div></div>`:''}
+        <div class="row"><button class="btn sm" data-act="cal-bus" data-id="${b.id}">${ic('cal',14)}Availability</button><button class="btn sm" data-act="price-bus" data-id="${b.id}">${ic('money',14)}Pricing</button></div>
+      </div>
+    </div></div>`;}).join('')}</div>`;
+}
+function addBusForm(){
+  const n = S.school.newBus, sug = SUGGESTED[n.seats];
+  return `<div class="card stack" style="max-width:720px">
+    <div class="row between"><h2>Add a bus</h2><button class="link" data-act="cancel-add">Cancel</button></div>
+    <div class="grid g2">
+      <label class="f" for="nb-model">Make and model<input class="inp" id="nb-model" data-text="school.newBus.model" value="${esc(n.model)}" placeholder="e.g. Toyota Coaster"></label>
+      <label class="f" for="nb-plate">Number plate<input class="inp" id="nb-plate" data-text="school.newBus.plate" value="${esc(n.plate)}" placeholder="e.g. UBJ 330P"></label>
+      <label class="f" for="nb-seats">Seats<select class="inp" id="nb-seats" data-bind="school.newBus.seats" data-num>${SEAT_SIZES.map(s=>`<option ${s==n.seats?'selected':''}>${s}</option>`).join('')}</select></label>
+      <label class="f" for="nb-year">Year<input class="inp num" type="number" id="nb-year" data-text="school.newBus.year" value="${esc(n.year)}"></label>
+      <label class="f" for="nb-driver">Usual driver<input class="inp" id="nb-driver" data-text="school.newBus.driver" value="${esc(n.driver)}" placeholder="Full name"></label>
+      <label class="f" for="nb-daily">Daily rate (UGX)<input class="inp num" type="number" id="nb-daily" data-text="school.newBus.daily" value="${esc(n.daily)}" placeholder="${sug}"></label>
+    </div>
+    <div class="notice acc small">${ic('money',16)}<div>Suggested for ${n.seats} seats: <b>${fmt(sug)}</b> per day, ${fmt(sug*6)} per week, ${fmt(sug*22)} per month. <button class="link" data-act="use-sug">Use suggestion</button></div></div>
+    <div class="chips">
+      ${[['ac','Air-conditioned'],['belts','Seatbelts'],['gps','GPS tracker']].map(([k,l])=>`<button class="chip" data-act="nb-toggle" data-id="${k}" aria-pressed="${n[k]}">${l}</button>`).join('')}
+    </div>
+    <div class="stack s"><h4>Documents</h4>
+      <div class="grid g3">${['Registration (logbook)','Insurance certificate','Inspection certificate'].map((d,i)=>`<label class="f" for="doc${i}">${d}<input class="inp small" type="file" id="doc${i}" accept="image/*,.pdf"></label>`).join('')}</div>
+      <p class="tiny muted">Optional in this demo. Photos from your phone are fine.</p>
+    </div>
+    <div class="row between"><span class="small muted">Next: ${esc(mechanicName())} inspects the bus, then our team approves the listing.</span><button class="btn primary" data-act="save-bus">Submit for inspection</button></div>
+  </div>`;
+}
+function schoolCalendar(){
+  const buses = mySchoolBuses(), b = busById(S.school.calBus) || buses[0], mo = S.school.calMonth;
+  return `<div class="card stack">
+    <div class="row between">
+      <div class="chips">${buses.map(x=>`<button class="chip" data-act="cal-pick" data-id="${x.id}" aria-pressed="${x.id===b.id}">${esc(x.plate)} · ${x.seats} seats</button>`).join('')}</div>
+      <div class="row"><button class="btn sm" data-act="cal-mo" data-id="-1" ${mo<=0?'disabled':''} aria-label="Earlier months">${ic('back',14)}</button><button class="btn sm" data-act="cal-mo" data-id="1" ${mo>=3?'disabled':''} aria-label="Later months">${ic('next',14)}</button></div>
+    </div>
+    <p class="small muted">Tap or drag across days to switch between <b>school use</b> and <b>open for hire</b>. Blocked days can never be booked.</p>
+    ${calendarHtml(b.id, monthsFrom(mo,2), {edit:true})}
+    <div class="row">
+      <button class="btn sm" data-act="cal-term" data-id="${b.id}">Block weekdays until end of term (4 Dec)</button>
+      <button class="btn sm" data-act="cal-holiday" data-id="${b.id}">Open all of the December holiday</button>
+    </div>
+  </div>`;
+}
+function bookingRow(k, actions){
+  const b = busById(k.bus), [st,cls] = STATUS[k.status];
+  const flags = [];
+  if(k.q.oneWay>250) flags.push('Long distance'); if(k.purpose==='Special conversion project') flags.push('Conversion');
+  return `<div class="li"><div class="main">
+    <div class="row"><b>${esc(k.customer)}</b><span class="pill ${cls} dot">${st}</span>${flags.map(f=>`<span class="pill warn">${f}</span>`).join('')}</div>
+    <span class="small">${esc(fmtRange(k.start,k.end))} · ${esc(k.pickup)} → ${esc(k.dest)} · ${k.pax} people · ${esc(k.purpose)}${k.note?` · ${esc(k.note)}`:''}</span>
+    <span class="small muted">${esc(b.plate)} · ${b.seats}-seat ${esc(b.model)} · ${esc(k.contact)} · Your payout <b class="num" style="color:var(--ink)">${fmt(k.q.payout)}</b></span>
+  </div>${actions||''}</div>`;
+}
+function schoolBookings(){
+  const ks = myBookings();
+  const req = ks.filter(k=>k.status==='requested'), up = ks.filter(k=>['confirmed','in_progress'].includes(k.status)), past = ks.filter(k=>['completed','declined','cancelled'].includes(k.status));
+  return `<div class="stack s"><h3>Requests</h3>${req.length?`<div class="list">${req.map(k=>bookingRow(k, `<div class="row"><button class="btn sm danger" data-act="decline" data-id="${k.id}">Decline</button><button class="btn sm ok" data-act="approve" data-id="${k.id}">Approve</button></div>`)).join('')}</div>`:'<p class="small muted">No requests waiting.</p>'}</div>
+  <div class="stack s"><h3>Upcoming</h3>${up.length?`<div class="list">${up.map(k=>bookingRow(k)).join('')}</div>`:'<p class="small muted">Nothing upcoming.</p>'}</div>
+  <div class="stack s"><h3>Past</h3>${past.length?`<div class="list">${past.map(k=>bookingRow(k)).join('')}</div>`:'<p class="small muted">No past trips.</p>'}</div>`;
+}
+function schoolEarnings(){
+  const e = earnings(), ks = myBookings().filter(k=>['confirmed','in_progress','completed'].includes(k.status)).sort((a,b)=>b.start.localeCompare(a.start));
+  return `<div class="grid g3">
+    <div class="tile"><span class="l">Paid out</span><span class="v">${fmt(e.released)}</span></div>
+    <div class="tile"><span class="l">Held in escrow</span><span class="v">${fmt(e.held)}</span></div>
+    <div class="tile"><span class="l">Commission rate</span><span class="v">${DB.settings.commission}%</span></div>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Trip</th><th>Date</th><th class="r">Customer paid</th><th class="r">Commission</th><th class="r">Driver bonus</th><th class="r">Your payout</th><th>Status</th></tr></thead>
+    <tbody>${ks.map(k=>`<tr><td>${k.ref} · ${esc(k.customer)}</td><td>${fmtDate(k.start)}</td><td class="r num">${fmt(k.q.total)}</td><td class="r num">−${fmt(k.q.commission)}</td><td class="r num">−${fmt(k.q.driverBonus)}</td><td class="r num"><b>${fmt(k.q.payout)}</b></td><td>${k.status==='completed'?'<span class="pill ok">Paid out</span>':'<span class="pill info">In escrow</span>'}</td></tr>`).join('')}</tbody>
+  </table></div>
+  <p class="small muted">Payouts go to ${esc(schoolById(MY_SCHOOL).payout)} within 24 hours of the driver ending a trip. The driver bonus is paid to the driver directly.</p>`;
+}
+function schoolRewards(){
+  const sc = schoolById(MY_SCHOOL), st = DB.settings;
+  const n1 = tripsInWindow(sc, st.r1Days, sc.unlock1), n2 = tripsInWindow(sc, st.r2Days, sc.unlock2);
+  const avg = mySchoolBuses().filter(b=>b.reviews.length).reduce((a,b,_,arr)=>a+ratingOf(b)/arr.length,0);
+  const rules = [
+    {t:'Free weekly maintenance check', d:`${st.r1Trips} paid trips in ${st.r1Days} days`, n:n1, of:st.r1Trips},
+    {t:`${st.r2Pct}% off one major service`, d:`${st.r2Trips} paid trips in ${st.r2Days} days`, n:n2, of:st.r2Trips},
+    {t:'Priority listing in search', d:'4.5+ rating and no safety incidents this term', n:avg>=4.5?1:0, of:1, txt:`Average rating ${avg.toFixed(1)}`}
+  ];
+  return `<div class="grid g3">
+    <div class="tile"><span class="l">Reward points</span><span class="v">${sc.points}</span></div>
+    <div class="tile"><span class="l">Paid trips, last 30 days</span><span class="v">${tripsInWindow(sc,30)}</span></div>
+    <div class="tile"><span class="l">Rewards ready to use</span><span class="v">${sc.rewards.filter(r=>r.status==='available').length}</span></div>
+  </div>
+  <div class="grid g3">${rules.map(r=>`<div class="card stack s">
+    <h3>${r.t}</h3><span class="small muted">${r.d}</span>
+    <div class="progress ${r.n>=r.of?'done':''}"><i style="width:${Math.min(100,r.n/r.of*100)}%"></i></div>
+    <span class="small"><b>${r.txt || `${Math.min(r.n,r.of)} of ${r.of}`}</b>${r.n>=r.of?' · <span style="color:var(--ok);font-weight:600">Unlocked</span>':''}</span>
+  </div>`).join('')}</div>
+  <div class="stack s"><h3>Your rewards</h3>
+    <div class="list">${sc.rewards.length?sc.rewards.slice().reverse().map(r=>`<div class="li"><div class="main"><b>${esc(r.title)}</b><span class="small muted">${esc(r.status==='used'?r.used:r.note)}</span></div>${r.status==='available'?`<button class="btn sm primary" data-act="redeem" data-id="${r.id}">${ic('wrench',14)}Book with ${esc(mechanicName())}</button>`:r.status==='booked'?'<span class="pill info">Booked</span>':'<span class="pill">Used</span>'}</div>`).join(''):'<div class="li small muted">No rewards yet.</div>'}</div>
+  </div>
+  <div class="stack s"><h3>Points history</h3>
+    <div class="list">${sc.ledger.map(l=>`<div class="li"><div class="main"><span>${esc(l.text)}</span><span class="tiny muted">${fmtDate(l.date,true)}</span></div><b class="num small" style="color:${l.pts.startsWith('−')?'var(--bad)':'var(--ink)'}">${esc(l.pts)}</b></div>`).join('')}</div>
+    <p class="tiny muted">Late cancellations and failed inspections remove points. Rewards are funded from commission and capped at ${st.cap}% of it.</p>
+  </div>`;
+}
+
+/* ============ DRIVER ============ */
+const DRIVER = {name:'Joseph Okello', phone:'+256 772 000 111', school:MY_SCHOOL};
+const CHECKS = [['tyres','Tyres','Pressure and tread on all wheels'],['lights','Lights and indicators','Front, rear, hazards'],['brakes','Brakes','Pedal feel and handbrake'],['fuel','Fuel','Enough for the first leg'],['firstaid','First-aid kit','Sealed and complete'],['extinguisher','Fire extinguisher','Pressure gauge in green']];
+const ROLL = ['Aisha N.','Brian K.','Catherine A.','Daniel O.','Esther M.','Faith L.','Gideon S.','Hellen T.','Isaac B.','Joan W.','Kenneth M.','Lydia N.'];
+function driverTrips(){ const ids = DB.buses.filter(b=>b.school===DRIVER.school).map(b=>b.id); return DB.bookings.filter(k=>ids.includes(k.bus) && ['confirmed','in_progress'].includes(k.status)).sort((a,b)=>a.start.localeCompare(b.start)); }
+function renderDriver(){
+  const d = S.driver;
+  const bar = `<div class="phone-bar"><span>9:41</span><span>${ic('check',12)} Saved on phone · syncs when online</span></div>`;
+  let body;
+  if(d.step==='login'){
+    body = `<div class="stack s"><h2>Driver sign in</h2><p class="small muted">Use the phone number your school registered.</p></div>
+      <label class="f" for="dp">Phone number<input class="inp num" id="dp" value="${DRIVER.phone}"></label>
+      <button class="btn primary lg block" data-act="drv-code">Send code by SMS</button>`;
+  } else if(d.step==='code'){
+    body = `<div class="stack s"><h2>Enter the code</h2><p class="small muted">We sent 4 digits to ${DRIVER.phone}.</p></div>
+      <label class="f" for="dc">Code<input class="inp num" id="dc" value="4821" inputmode="numeric" style="font-size:22px;letter-spacing:.3em"></label>
+      <button class="btn primary lg block" data-act="drv-login">Sign in</button>`;
+  } else if(d.step==='list'){
+    const trips = driverTrips();
+    body = `<div class="row between"><div><span class="tiny muted">Signed in</span><h2>${DRIVER.name}</h2></div><button class="link small" data-act="drv-out">Sign out</button></div>
+      <h3>Your trips</h3>
+      ${trips.length?trips.map(k=>{ const b=busById(k.bus), [st,cls]=STATUS[k.status]; return `<button class="mini-card" data-act="drv-open" data-id="${k.id}">
+        <div class="row between"><b>${fmtDate(k.start)}${k.start!==k.end?' – '+fmtDate(k.end):''}</b><span class="pill ${cls} dot">${st}</span></div>
+        <span>${esc(k.pickup)} → ${esc(k.dest)} · ${k.pax} people</span>
+        <span class="small muted">${esc(b.plate)} · ${esc(k.customer)}</span></button>`;}).join(''):'<p class="small muted">No trips assigned. Approved bookings appear here.</p>'}`;
+  } else {
+    const k = DB.bookings.find(x=>x.id===d.trip), b = busById(k.bus), t = k.trip;
+    const done = CHECKS.filter(([id])=>t.checks[id]).length, ready = done===CHECKS.length;
+    const school = k.purpose==='School trip';
+    if(k.status==='confirmed'){
+      body = `<button class="link small" data-act="drv-back">${ic('back',14)}Trips</button>
+        <div><span class="tiny muted">${k.ref} · ${esc(b.plate)}</span><h2>${esc(k.pickup)} → ${esc(k.dest)}</h2><span class="small muted">${esc(fmtDate(k.start))} · ${k.pax} people · ${esc(k.customer)}</span></div>
+        <div class="row between"><h3>Pre-trip checklist</h3><span class="small num"><b>${done}</b> of ${CHECKS.length}</span></div>
+        <div class="progress ${ready?'done':''}"><i style="width:${done/CHECKS.length*100}%"></i></div>
+        <div class="stack s">${CHECKS.map(([id,l,sub])=>`<button class="check ${t.checks[id]?'on':''}" data-act="drv-check" data-id="${id}" aria-pressed="${!!t.checks[id]}"><span class="box">${t.checks[id]?ic('check',16):''}</span><span style="flex:1"><b>${l}</b><br><span class="small muted">${sub}</span></span>${ic('camera',18,'style="color:var(--muted)"')}</button>`).join('')}</div>
+        <button class="btn primary lg block" data-act="drv-start" ${ready?'':'disabled'}>Start trip</button>
+        ${ready?'':'<p class="tiny muted" style="text-align:center">Finish every check to start the trip.</p>'}`;
+    } else {
+      const present = Object.values(t.roll).filter(Boolean).length;
+      body = `<button class="link small" data-act="drv-back">${ic('back',14)}Trips</button>
+        <div class="row between"><div><span class="tiny muted">${k.ref}</span><h2>${esc(k.pickup)} → ${esc(k.dest)}</h2></div><span class="pill acc dot">On the road</span></div>
+        ${routeMap(k)}
+        <div class="small row">${ic('gps')}Sharing location with ${esc(k.customer)} · started ${esc(t.startedAt||'')}</div>
+        ${school?`<div class="row between"><h3>Roll call</h3><span class="small num"><b>${present}</b> of ${ROLL.length} shown</span></div>
+        <div class="grid g3" style="grid-template-columns:repeat(2,1fr)">${ROLL.map((n,i)=>`<button class="chip" style="justify-content:flex-start;padding:9px 12px" data-act="drv-roll" data-id="${i}" aria-pressed="${!!t.roll[i]}">${t.roll[i]?ic('check',13):''}${n}</button>`).join('')}</div>
+        <button class="link small" data-act="drv-roll-all">Mark all present</button>`:''}
+        <button class="btn danger block" data-act="drv-incident">${ic('alert')}Report breakdown or incident</button>
+        <button class="btn ok lg block" data-act="drv-end">End trip</button>`;
+    }
+  }
+  return `<div class="stack" style="align-items:center">
+    <p class="small muted" style="text-align:center;max-width:520px">The driver app is built for a phone. It keeps working offline and syncs when the signal returns.</p>
+    <div class="phone">${bar}${body}</div></div>`;
+}
+
+/* ============ MECHANIC ============ */
+const INSPECT = ['Tyres and wheel nuts','Brakes','Lights and indicators','Steering and suspension','Engine and fluids','Seatbelts','Seats and floor','Windows and emergency exit','Fire extinguisher','First-aid kit'];
+const FUND = {platform:['Listing inspection · paid by Bus&Go','info'], school:['Paid by school','warn'], reward:['Free check · reward-funded','ok']};
+function renderMech(){
+  const m = DB.mechanics[0], st = S.mech;
+  if(st.job) return mechForm();
+  const open = DB.jobs.filter(j=>j.status==='open'), done = DB.jobs.filter(j=>j.status==='done');
+  const list = st.tab==='open'?open:done;
+  return `<div class="section-h"><div class="stack s" style="gap:2px"><h1>${esc(m.name)}</h1><span class="small muted">${esc(m.area)} · <span class="verified">${ic('shield',13)}Verified garage</span> · ${starIc(13)} ${m.rating} from schools · ${m.jobs + done.length} jobs</span></div></div>
+  <div class="tabs"><button class="tab" data-act="mech-tab" data-id="open" aria-selected="${st.tab==='open'}">Job inbox${open.length?`<span class="count">${open.length}</span>`:''}</button><button class="tab" data-act="mech-tab" data-id="done" aria-selected="${st.tab==='done'}">Completed</button></div>
+  <div class="list">${list.length?list.map(j=>{ const b=busById(j.bus), sc=schoolById(b.school), [fl,fc]=FUND[j.funding]; return `<div class="li"><div class="main">
+      <div class="row"><b>${j.type}</b><span class="pill ${fc}">${fl}</span>${j.outcome?`<span class="pill ${j.outcome==='pass'?'ok':'bad'} dot">${j.outcome==='pass'?'Passed':'Failed'}</span>`:''}</div>
+      <span class="small">${esc(b.plate)} · ${b.seats}-seat ${esc(b.model)} · ${esc(sc.name)}</span>
+      <span class="small muted">${j.status==='open'?'Due '+fmtDate(j.due,true):'Done '+fmtDate(j.done,true)}${j.cost?` · ${fmt(j.cost)}`:''}</span>
+    </div>${j.status==='open'?`<button class="btn sm primary" data-act="mech-open" data-id="${j.id}">Start inspection</button>`:''}</div>`;}).join(''):'<div class="li small muted">No jobs here.</div>'}</div>`;
+}
+function mechForm(){
+  const j = DB.jobs.find(x=>x.id===S.mech.job), b = busById(j.bus), sc = schoolById(b.school), f = S.mech.form, [fl,fc] = FUND[j.funding];
+  const answered = INSPECT.filter((_,i)=>f[i]).length, fails = INSPECT.filter((_,i)=>f[i]==='fail').length;
+  return `<button class="link" data-act="mech-back">${ic('back')}Job inbox</button>
+  <div class="split">
+    <div class="card stack">
+      <div class="row between"><h2>${j.type}</h2><span class="pill ${fc}">${fl}</span></div>
+      <div class="row between"><span class="small muted">Mark each item pass or fail.</span><button class="link small" data-act="mech-allpass">Mark all pass</button></div>
+      <div class="list">${INSPECT.map((it,i)=>`<div class="li" style="padding:10px 14px"><span>${it}</span><div class="pf"><button class="p" data-act="mech-pf" data-id="${i}" data-v="pass" aria-pressed="${f[i]==='pass'}">Pass</button><button class="f" data-act="mech-pf" data-id="${i}" data-v="fail" aria-pressed="${f[i]==='fail'}">Fail</button></div></div>`).join('')}</div>
+      <label class="f" for="mnote">Notes for the school<textarea class="inp" id="mnote" data-text="mech.form.note" placeholder="e.g. Rear left tyre at 2 mm, replace before next hire">${esc(f.note||'')}</textarea></label>
+      <label class="f" for="mph">Condition photos<input class="inp" type="file" id="mph" accept="image/*" multiple></label>
+      ${j.funding==='school'?`<label class="f" for="mq">Invoice amount (UGX)<input class="inp num" type="number" id="mq" data-text="mech.form.cost" value="${esc(f.cost||j.cost||'')}"></label>`:''}
+      <div class="row between"><span class="small"><b>${answered}</b> of ${INSPECT.length} checked${fails?` · <span style="color:var(--bad);font-weight:600">${fails} failed</span>`:''}</span>
+      <button class="btn primary" data-act="mech-submit" ${answered<INSPECT.length?'disabled':''}>Submit ${answered<INSPECT.length?'report':fails?'· Fail':'· Pass'}</button></div>
+    </div>
+    <aside class="card stack sticky">
+      ${busArt(b)}
+      <div><h3>${esc(b.plate)}</h3><div class="small muted">${b.seats}-seat ${esc(b.model)} · ${b.year}</div><div class="small muted">${esc(sc.name)}, ${esc(sc.area)}</div></div>
+      <div class="notice ${fc==='ok'?'ok':'info'} small">${ic('money',16)}<div>${j.funding==='reward'?`Bus&amp;Go pays you the agreed ${fmt(DB.settings.checkCost)} for this free check. Do not bill the school.`:j.funding==='platform'?'Bus&Go pays for listing inspections at the agreed rate.':'Invoice the school through the platform. Paid on approval.'}</div></div>
+    </aside>
+  </div>`;
+}
+
+/* ============ ADMIN ============ */
+function pendingApprovals(){
+  const out = [];
+  DB.schools.filter(s=>s.status==='pending').forEach(s=>out.push({kind:'school', id:s.id, title:s.name, sub:`${s.area} · ${s.docs.join(', ')}`}));
+  DB.buses.filter(b=>b.status==='pending_approval').forEach(b=>out.push({kind:'bus', id:b.id, title:`${b.seats}-seat ${b.model} · ${b.plate}`, sub:`${schoolById(b.school).name} · inspection passed ${fmtDate(b.inspection,true)} · insured by ${b.insurer} to ${fmtDate(b.insurance,true)}`}));
+  DB.mechanics.filter(m=>m.status==='pending').forEach(m=>out.push({kind:'mechanic', id:m.id, title:m.name, sub:`${m.area} · ${m.docs.join(', ')}`}));
+  return out;
+}
+function adminNumbers(){
+  const ks = DB.bookings.filter(k=>['confirmed','in_progress','completed'].includes(k.status));
+  const gbv = ks.reduce((a,k)=>a+k.q.total,0), comm = DB.bookings.filter(k=>k.status==='completed').reduce((a,k)=>a+k.q.commission,0);
+  const rewardCost = DB.jobs.filter(j=>j.funding==='reward').length * DB.settings.checkCost;
+  const listed = DB.buses.filter(b=>b.status==='listed');
+  let open=0, used=0; const end = addDays(TODAY,60);
+  listed.forEach(b=>{ const {blackout, booked} = busDays(b.id); range(addDays(TODAY,1),end).forEach(d=>{ if(!blackout.has(d)){ open++; if(booked.has(d)) used++; } }); });
+  return {gbv, comm, rewardCost, listed:listed.length, bookings:ks.length, util: open?used/open:0, open};
+}
+function renderAdmin(){
+  const t = S.admin.tab, p = pendingApprovals().length;
+  const tabs = [['overview','Overview'],['approvals','Approvals',p],['safety','Safety'],['escrow','Escrow'],['settings','Rules and pricing']];
+  const v = {overview:adminOverview, approvals:adminApprovals, safety:adminSafety, escrow:adminEscrow, settings:adminSettings};
+  return `<div class="section-h"><h1>Admin console</h1><span class="small muted">Bus&amp;Go operations team</span></div>
+  <div class="tabs">${tabs.map(([k,l,n])=>`<button class="tab" data-act="admin-tab" data-id="${k}" aria-selected="${t===k}">${l}${n?`<span class="count">${n}</span>`:''}</button>`).join('')}</div>
+  ${v[t]()}`;
+}
+function adminOverview(){
+  const n = adminNumbers(), st = DB.settings, share = n.comm ? n.rewardCost/n.comm*100 : 0;
+  const bySchool = DB.schools.filter(s=>s.status==='verified').map(s=>{ const bs = DB.buses.filter(b=>b.school===s.id && b.status==='listed'); const ks = DB.bookings.filter(k=>bs.some(b=>b.id===k.bus) && ['confirmed','in_progress','completed'].includes(k.status)); return {s, buses:bs.length, trips:ks.length, value:ks.reduce((a,k)=>a+k.q.total,0)}; });
+  return `<div class="grid g4">
+    <div class="tile"><span class="l">Listed buses</span><span class="v">${n.listed}</span></div>
+    <div class="tile"><span class="l">Bookings (Oct–Dec)</span><span class="v">${n.bookings}</span></div>
+    <div class="tile"><span class="l">Booking value</span><span class="v">${fmtK(n.gbv)}</span></div>
+    <div class="tile"><span class="l">Commission earned</span><span class="v">${fmtK(n.comm)}</span></div>
+  </div>
+  <div class="grid g2">
+    <div class="card stack s"><h3>Rewards cost vs commission</h3>
+      <div class="progress ${share>st.cap?'':'done'}"><i style="width:${Math.min(100,share/st.cap*100)}%;${share>st.cap?'background:var(--bad)':''}"></i></div>
+      <span class="small"><b>${share.toFixed(1)}%</b> of commission spent on free checks · cap ${st.cap}%</span></div>
+    <div class="card stack s"><h3>Idle days filled, next 60 days</h3>
+      <div class="progress"><i style="width:${Math.max(2,n.util*100)}%"></i></div>
+      <span class="small"><b>${(n.util*100).toFixed(1)}%</b> of ${n.open} open bus-days are booked</span></div>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th>School</th><th class="r">Listed buses</th><th class="r">Bookings</th><th class="r">Booking value</th></tr></thead>
+  <tbody>${bySchool.map(r=>`<tr><td>${esc(r.s.name)}</td><td class="r num">${r.buses}</td><td class="r num">${r.trips}</td><td class="r num">${fmt(r.value)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function adminApprovals(){
+  const p = pendingApprovals(), label = {school:'School', bus:'Vehicle', mechanic:'Mechanic'};
+  return p.length ? `<div class="list">${p.map(x=>`<div class="li"><div class="main"><div class="row"><span class="pill info">${label[x.kind]}</span><b>${esc(x.title)}</b></div><span class="small muted">${esc(x.sub)}</span></div>
+    <div class="row"><button class="btn sm danger" data-act="adm-reject" data-kind="${x.kind}" data-id="${x.id}">Reject</button><button class="btn sm ok" data-act="adm-approve" data-kind="${x.kind}" data-id="${x.id}">Approve</button></div></div>`).join('')}</div>
+    <p class="small muted">A vehicle is approved only after documents are uploaded, a platform mechanic passes it, and insurance is confirmed.</p>`
+    : `<div class="card flat">Nothing to approve. New schools, vehicles and garages show up here.</div>`;
+}
+function adminSafety(){
+  const overdue = DB.buses.filter(b=>b.status==='listed' && inspectedDaysAgo(b)>90);
+  const low = DB.buses.filter(b=>b.reviews.length>=3 && ratingOf(b)<3.5);
+  const watch = DB.buses.filter(b=>b.reviews.length>=3 && ratingOf(b)>=3.5 && ratingOf(b)<4);
+  return `<div class="grid g3">
+    <div class="tile"><span class="l">Open incidents</span><span class="v">${DB.incidents.filter(i=>i.status==='open').length}</span></div>
+    <div class="tile"><span class="l">Overdue inspections</span><span class="v">${overdue.length}</span></div>
+    <div class="tile"><span class="l">Low-rated listings</span><span class="v">${low.length+watch.length}</span></div>
+  </div>
+  <div class="stack s"><h3>Incidents</h3><div class="list">${DB.incidents.slice().reverse().map(i=>{const b=busById(i.bus); return `<div class="li"><div class="main"><div class="row"><b>${esc(i.type)}</b><span class="pill ${i.status==='open'?'bad':'ok'} dot">${i.status==='open'?'Open':'Resolved'}</span></div><span class="small">${esc(i.text)}</span><span class="small muted">${esc(b.plate)} · ${esc(schoolById(b.school).name)} · ${fmtDate(i.date,true)}</span></div>${i.status==='open'?`<button class="btn sm" data-act="resolve" data-id="${i.id}">Mark resolved</button>`:''}</div>`;}).join('')}</div></div>
+  <div class="stack s"><h3>Overdue inspections (over 90 days)</h3><div class="list">${overdue.length?overdue.map(b=>`<div class="li"><div class="main"><b>${esc(b.plate)} · ${b.seats}-seat ${esc(b.model)}</b><span class="small muted">${esc(schoolById(b.school).name)} · last inspected ${fmtDate(b.inspection,true)}</span></div><button class="btn sm" data-act="adm-inspect" data-id="${b.id}">Order inspection</button></div>`).join(''):'<div class="li small muted">None.</div>'}</div></div>
+  <div class="stack s"><h3>Ratings watch</h3><div class="list">${[...low,...watch].length?[...low,...watch].map(b=>`<div class="li"><div class="main"><b>${esc(b.plate)} · ${starIc(13)} ${ratingOf(b).toFixed(1)}</b><span class="small muted">${esc(schoolById(b.school).name)} · ${b.reviews.length} reviews · listings under 3.5 are suspended automatically</span></div><span class="pill ${ratingOf(b)<3.5?'bad':'warn'}">${ratingOf(b)<3.5?'Suspended':'Ranked lower'}</span></div>`).join(''):'<div class="li small muted">All listings above 4.0.</div>'}</div></div>`;
+}
+function adminEscrow(){
+  const ks = DB.bookings.filter(k=>k.status!=='declined').sort((a,b)=>b.start.localeCompare(a.start));
+  const held = ks.filter(k=>['requested','confirmed','in_progress'].includes(k.status)).reduce((a,k)=>a+(k.status==='requested'?k.q.deposit:k.q.total),0);
+  return `<div class="grid g3">
+    <div class="tile"><span class="l">Held in escrow</span><span class="v">${fmtK(held)}</span></div>
+    <div class="tile"><span class="l">Paid to schools</span><span class="v">${fmtK(ks.filter(k=>k.status==='completed').reduce((a,k)=>a+k.q.payout,0))}</span></div>
+    <div class="tile"><span class="l">Driver bonuses paid</span><span class="v">${fmtK(ks.filter(k=>k.status==='completed').reduce((a,k)=>a+k.q.driverBonus,0))}</span></div>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th>Ref</th><th>Customer</th><th>Trip date</th><th class="r">Total</th><th class="r">School</th><th class="r">Commission</th><th class="r">Driver</th><th>Escrow</th></tr></thead>
+  <tbody>${ks.map(k=>{ const s = k.status==='completed'?['Released','ok']:k.status==='cancelled'?['Refunded','']:k.status==='requested'?['Deposit held','info']:['Held','info']; return `<tr><td>${k.ref}</td><td>${esc(k.customer)}</td><td>${fmtDate(k.start)}</td><td class="r num">${fmt(k.q.total)}</td><td class="r num">${fmt(k.q.payout)}</td><td class="r num">${fmt(k.q.commission)}</td><td class="r num">${fmt(k.q.driverBonus)}</td><td><span class="pill ${s[1]}">${s[0]}</span></td></tr>`;}).join('')}</tbody></table></div>`;
+}
+function adminSettings(){
+  const st = DB.settings;
+  const f = (id,l,v,suf) => `<label class="f" for="${id}">${l}<div class="row" style="flex-wrap:nowrap"><input class="inp num" type="number" id="${id}" data-setting="${id}" value="${v}" style="max-width:130px"><span class="small muted">${suf}</span></div></label>`;
+  return `<div class="grid g2">
+    <div class="card stack"><h3>Commission</h3>${f('commission','Commission on charter bookings',st.commission,'% of booking value')}${f('driverBonus','Driver trip bonus',st.driverBonus,'UGX per day')}<p class="tiny muted">Applies to new bookings. Existing bookings keep the rate they were quoted.</p></div>
+    <div class="card stack"><h3>Reward rules</h3>
+      <div class="row">${f('r1Trips','Free weekly check after',st.r1Trips,'trips')}${f('r1Days','within',st.r1Days,'days')}</div>
+      <div class="row">${f('r2Trips','Major service discount after',st.r2Trips,'trips')}${f('r2Days','within',st.r2Days,'days')}</div>
+      <div class="row">${f('r2Pct','Discount',st.r2Pct,'%')}${f('cap','Rewards cap',st.cap,'% of commission')}</div>
+      ${f('checkCost','Negotiated cost of a free check',st.checkCost,'UGX')}
+    </div>
+    <div class="card stack s"><h3>Cancellation tiers</h3><div class="kv small"><span>14+ days before</span><b>100% of deposit back</b></div><div class="kv small"><span>7 to 13 days</span><b>50% back</b></div><div class="kv small"><span>Under 7 days</span><b>Deposit kept</b></div></div>
+    <div class="card stack s"><h3>Featured listings</h3><p class="small muted">Schools pay to appear first in busy periods. Planned for a later stage.</p></div>
+  </div>`;
+}
+
+/* ============ actions ============ */
+function notify(text, via='WhatsApp + SMS'){ toast(text, via); }
+function completeTrip(k){
+  const b = busById(k.bus), sc = schoolById(b.school), st = DB.settings;
+  k.status = 'completed'; k.trip.endedAt = '17:40';
+  sc.trips.push(TODAY); sc.points += 10;
+  sc.ledger.unshift({date:TODAY, text:`Trip completed · ${k.customer}`, pts:'+10'});
+  toast(`Trip ended. ${fmt(k.q.payout)} released to ${sc.name}, ${fmt(k.q.commission)} commission, ${fmt(k.q.driverBonus)} driver bonus.`);
+  if(tripsInWindow(sc, st.r1Days, sc.unlock1) >= st.r1Trips){
+    sc.unlock1 = TODAY; sc.rewards.push({id:uid('r'), title:'Free weekly check', note:`Unlocked ${fmtDate(TODAY)} · ${st.r1Trips} trips in ${st.r1Days} days`, status:'available'});
+    sc.ledger.unshift({date:TODAY, text:`Free weekly check unlocked (${st.r1Trips} trips in ${st.r1Days} days)`, pts:'reward'});
+    setTimeout(()=>notify(`${sc.name} unlocked a free weekly maintenance check.`, 'Reward unlocked'), 600);
+  }
+  if(tripsInWindow(sc, st.r2Days, sc.unlock2) >= st.r2Trips){
+    sc.unlock2 = TODAY; sc.rewards.push({id:uid('r'), title:`${st.r2Pct}% off one major service`, note:`Unlocked ${fmtDate(TODAY)}`, status:'available'});
+    sc.ledger.unshift({date:TODAY, text:`Major service discount unlocked`, pts:'reward'});
+  }
+}
+function createBooking(){
+  const b = busById(S.hire.busId), s = S.search;
+  const k = {id:uid('k'), ref:'BG-' + (24500 + Math.floor(Math.random()*400)), bus:b.id, customer:ME.org, me:true, contact:ME.phone, start:s.start, end:s.end, pickup:s.pickup, dest:s.dest, pax:+s.pax, purpose:s.purpose, status:'requested', created:TODAY+'T'+Date.now(), addons:{...S.draft.addons}, trip:{checks:{},roll:{},incidents:[]}, signer:S.hire.signer, method:S.hire.method};
+  k.q = quote(b, {...s, addons:k.addons});
+  DB.bookings.push(k); save();
+  S.hire.lastId = k.id; S.hire.view = 'done'; S.hire.paying = false; S.hire.step = 1; S.hire.agree = false; S.hire.signer = '';
+  render(); window.scrollTo({top:0});
+  setTimeout(()=>notify(`New booking request ${k.ref} for ${b.plate} on ${fmtRange(k.start,k.end)}. Reply in your dashboard.`, `WhatsApp to ${schoolById(b.school).name}`), 500);
+}
+function setPath(path, val){ const parts = path.split('.'); let o = S; while(parts.length>1) o = o[parts.shift()]; o[parts[0]] = val; }
+
+const ACTIONS = {
+  role: el => setRole(el.dataset.id),
+  guide: () => openModal(`<div class="row between"><h2>Demo guide</h2><button class="link" data-act="close-modal" aria-label="Close">${ic('x',18)}</button></div>
+    <p class="small muted">Five screens, one shared set of sample data. Follow a booking from search to payout.</p>
+    <ol class="stack s small" style="padding-left:18px;margin:0">
+      <li><b>Hire a bus.</b> Search 5–6 Dec, open a bus, book it and pay the deposit. Try a weekday in November to see school-use days blocked.</li>
+      <li><b>School.</b> Approve the new request in Bookings. Drag across the Calendar to block or open days.</li>
+      <li><b>Driver.</b> Sign in, open the Namboole trip, tick the checklist, start, then end the trip. The school hits 3 trips and unlocks a free check.</li>
+      <li><b>School → Rewards.</b> Book the free check. It lands in the Mechanic inbox as reward-funded.</li>
+      <li><b>School → Fleet.</b> Add a bus. The Mechanic inspects it, Admin approves it, and it appears in search.</li>
+      <li><b>Hire → My trips.</b> Rate the Entebbe trip or try cancelling to see the refund tiers.</li>
+    </ol>
+    <div class="row">${ROLES.map(r=>`<button class="btn sm" data-act="guide-go" data-id="${r.id}">${r.label}</button>`).join('')}</div>`),
+  'guide-go': el => { closeModal(); setRole(el.dataset.id); },
+  reset: () => openModal(`<h2>Reset the demo?</h2><p class="muted">This restores all sample buses, bookings and rewards. Your changes in this browser are cleared.</p><div class="row"><button class="btn" data-act="close-modal">Keep my changes</button><button class="btn primary" data-act="do-reset">Reset demo</button></div>`),
+  'do-reset': () => { DB = seed(); save(); closeModal(); S.hire.view='list'; S.driver={step:'login',trip:null}; S.mech={tab:'open',job:null,form:{}}; S.school.adding=false; render(); toast('Sample data restored.'); },
+  'close-modal': closeModal,
+  'close-modal-bg': (el, e) => { if(e.target===el) closeModal(); },
+  'modal-submit': () => { modalOnSubmit && modalOnSubmit(); },
+  toast: el => toast(el.dataset.msg),
+
+  /* hire */
+  'open-bus': el => { S.hire.busId = el.dataset.id; S.hire.view='detail'; render(); window.scrollTo({top:0}); },
+  'back-list': () => { S.hire.view='list'; render(); window.scrollTo({top:0}); },
+  'back-detail': () => { S.hire.view='detail'; S.hire.step=1; render(); },
+  'my-trips': () => { S.hire.view='trips'; render(); window.scrollTo({top:0}); },
+  seat: el => { S.filters.seats = el.dataset.id ? +el.dataset.id : null; render(); },
+  'more-filters': () => { S.hire.moreFilters = !S.hire.moreFilters; render(); },
+  'toggle-filter': el => { S.filters[el.dataset.id] = !S.filters[el.dataset.id]; render(); },
+  'start-book': () => { S.hire.view='book'; S.hire.step=1; render(); window.scrollTo({top:0}); },
+  'book-next': () => { S.hire.step++; render(); window.scrollTo({top:0}); },
+  'book-prev': () => { S.hire.step--; render(); },
+  method: el => { S.hire.method = el.dataset.id; render(); },
+  pay: () => { S.hire.paying = true; render(); setTimeout(createBooking, 1600); },
+  'quote-req': () => { const b = busById(S.hire.busId); openModal(`<h2>Request a quote</h2><p class="small muted">Tell ${esc(schoolById(b.school).name)} about your trip. They reply on WhatsApp.</p>
+      <label class="f" for="qmsg">Message<textarea class="inp" id="qmsg">Hello, we need the ${b.seats}-seater for ${esc(S.search.pax)} people, ${esc(fmtRange(S.search.start,S.search.end))}, ${esc(S.search.pickup)} to ${esc(S.search.dest)}. Can you give a price with an extra stop?</textarea></label>
+      <div class="row"><button class="btn" data-act="close-modal">Cancel</button><button class="btn primary" data-act="modal-submit">Send request</button></div>`, () => { closeModal(); notify('Quote request sent. Expect a reply within a few hours.', 'WhatsApp'); }); },
+  enquire: el => { const conv = el.dataset.kind==='conversion'; openModal(`<h2>${esc(el.dataset.id)}</h2>
+      ${conv?`<p class="small muted">Conversions follow a longer, protected flow:</p><ol class="small stack s" style="padding-left:18px;margin:0"><li>School approves the conversion plan</li><li>Insurer approves the use</li><li>Mechanic records condition with photos and a checklist; removed seats are logged and stored</li><li>You pay the restoration deposit into escrow</li><li>Mechanic signs off on return, then the deposit is released</li></ol><p class="small">Priced as monthly rental plus a fixed conversion and restoration fee.</p>`
+            :`<p class="small muted">Bus&amp;Go runs this programme. We hire the bus from a school and handle the driver, fuel and guide.</p>`}
+      <div class="grid g2"><label class="f" for="en-name">Your name<input class="inp" id="en-name" value="${esc(ME.name)}"></label><label class="f" for="en-ph">Phone<input class="inp" id="en-ph" value="${esc(ME.phone)}"></label></div>
+      <label class="f" for="en-n">${conv?'Project details':'Number of children'}<input class="inp" id="en-n" value="${conv?'Podcast studio for 4 weeks in January':'35'}"></label>
+      <div class="row"><button class="btn" data-act="close-modal">Cancel</button><button class="btn primary" data-act="modal-submit">Send enquiry</button></div>`, () => { closeModal(); notify('Thanks. Our team will call you within one working day.', 'SMS'); }); },
+  rate: el => { const k = DB.bookings.find(x=>x.id===el.dataset.id), b = busById(k.bus); let stars = 5;
+    const draw = () => `<div class="stars" role="group" aria-label="Stars">${[1,2,3,4,5].map(n=>`<button class="${n<=stars?'on':''}" data-star="${n}" aria-label="${n} stars">${starIc(30)}</button>`).join('')}</div>`;
+    openModal(`<h2>Rate your trip</h2><p class="small muted">${b.seats}-seat ${esc(b.model)} · driver ${esc(b.driver.name)} · ${esc(schoolById(b.school).name)}</p><div id="starbox">${draw()}</div>
+      <label class="f" for="rv">Comment<textarea class="inp" id="rv">Driver was on time and careful. Bus was clean.</textarea></label>
+      <div class="row"><button class="btn" data-act="close-modal">Later</button><button class="btn primary" data-act="modal-submit">Submit rating</button></div>`, () => {
+        b.reviews.unshift({by:ME.org, stars, date:TODAY, text:$('#rv').value.trim()||'No comment'}); k.rated = true; save(); closeModal(); render(); toast(`Thanks. ${b.plate} is now rated ${ratingOf(b).toFixed(1)}. Ratings affect search ranking.`); });
+    $('#starbox').addEventListener('click', e => { const s = e.target.closest('[data-star]'); if(s){ stars = +s.dataset.star; $('#starbox').innerHTML = draw(); } }); },
+  report: el => { const k = DB.bookings.find(x=>x.id===el.dataset.id); openModal(`<h2>Report an issue</h2>
+      <label class="f" for="rt">What happened?<select class="inp" id="rt"><option>Damage to the bus</option><option>Driver behaviour</option><option>Late pickup</option><option>Lost property</option><option>Other</option></select></label>
+      <label class="f" for="rd">Details<textarea class="inp" id="rd" placeholder="Tell us what happened"></textarea></label>
+      <label class="f" for="rp">Photos<input class="inp" type="file" id="rp" accept="image/*" multiple></label>
+      <div class="row"><button class="btn" data-act="close-modal">Cancel</button><button class="btn primary" data-act="modal-submit">Send report</button></div>`, () => {
+        DB.incidents.push({id:uid('i'), bus:k.bus, date:TODAY, type:$('#rt').value, text:($('#rd').value.trim()||'Reported by customer') + ` (${k.ref})`, status:'open'}); save(); closeModal(); render(); notify('Report received. The school and our safety team can see it now.', 'Support'); }); },
+  receipt: el => { const k = DB.bookings.find(x=>x.id===el.dataset.id), b = busById(k.bus), q = k.q;
+    openModal(`<div class="row between"><h2>${k.status==='completed'?'Invoice and receipt':'Booking details'}</h2><button class="link" data-act="close-modal" aria-label="Close">${ic('x',18)}</button></div>
+      <div class="small muted">${k.ref} · ${esc(ME.org)} · ${esc(schoolById(b.school).name)}</div>
+      <div><div class="kv small"><span>Bus hire · ${esc(q.basis)}</span><b class="num">${fmt(q.hire)}</b></div>
+      <div class="kv small"><span>Distance (${q.km} km)</span><b class="num">${q.kmCost?fmt(q.kmCost):'Included'}</b></div>
+      ${q.overnight?`<div class="kv small"><span>Overnight</span><b class="num">${fmt(q.overnight)}</b></div>`:''}
+      ${q.ins?`<div class="kv small"><span>Trip insurance</span><b class="num">${fmt(q.ins)}</b></div>`:''}
+      ${q.escort?`<div class="kv small"><span>Escort</span><b class="num">${fmt(q.escort)}</b></div>`:''}
+      <div class="kv total"><span>Total</span><span class="num">${fmt(q.total)}</span></div>
+      <div class="kv small"><span>Paid</span><b class="num">${fmt(k.status==='completed'||k.status==='in_progress'?q.total:q.deposit)}</b></div></div>
+      ${k.status==='completed'?'<span class="pill ok" style="align-self:flex-start">Paid in full</span>':''}`); },
+  cancel: el => { const k = DB.bookings.find(x=>x.id===el.dataset.id), r = refundFor(k), amt = Math.round(k.q.deposit*r.pct/100);
+    openModal(`<h2>Cancel ${k.ref}?</h2><p>Your trip is in ${diff(TODAY,k.start)} days. <b>${esc(r.label)}</b>.</p><div class="kv total"><span>Refund to ${esc(ME.phone)}</span><span class="num">${fmt(amt)}</span></div>
+      <div class="row"><button class="btn" data-act="close-modal">Keep booking</button><button class="btn danger" data-act="modal-submit">Cancel booking</button></div>`, () => {
+        k.status='cancelled'; k.refundNote = `Cancelled ${fmtDate(TODAY)}. ${fmt(amt)} refunded to mobile money.`; save(); closeModal(); render(); toast(`Booking cancelled. ${fmt(amt)} refunded.`); }); },
+
+  /* school */
+  'school-tab': el => { S.school.tab = el.dataset.id; S.school.adding=false; render(); },
+  'add-bus': () => { S.school.adding = true; render(); },
+  'cancel-add': () => { S.school.adding = false; render(); },
+  'use-sug': () => { S.school.newBus.daily = SUGGESTED[S.school.newBus.seats]; render(); },
+  'nb-toggle': el => { const k = el.dataset.id; S.school.newBus[k] = !S.school.newBus[k]; render(); },
+  'save-bus': () => { const n = S.school.newBus;
+    if(!n.model.trim() || !n.plate.trim()){ toast('Add the make, model and number plate first.'); return; }
+    const daily = +n.daily || SUGGESTED[n.seats]; const id = uid('b');
+    DB.buses.push({id, school:MY_SCHOOL, model:n.model.trim(), seats:+n.seats, year:+n.year||2018, plate:n.plate.trim().toUpperCase(), ac:n.ac, belts:n.belts, gps:n.gps, daily, weekly:daily*6, monthly:daily*22, extraKm:2500, overnight:50000, color:'#f2b705', label:'HILLSIDE ACADEMY', schoolBus:true, inspection:null, insurer:'Jubilee Allied', insurance:'2027-08-31', driver:{name:n.driver.trim()||'Joseph Okello', years:5, trips:0}, status:'pending_inspection', reviews:[], selfDrive:false});
+    DB.blackouts[id] = weekdaysBetween('2026-11-02','2026-12-04');
+    DB.jobs.push({id:uid('j'), bus:id, type:'Listing inspection', funding:'platform', due:addDays(TODAY,2), status:'open'});
+    save(); S.school.adding=false; S.school.newBus={model:'',plate:'',seats:33,year:2018,ac:false,belts:true,gps:false,daily:'',driver:''}; render();
+    notify(`${mechanicName()} will inspect ${n.plate.toUpperCase()} within 48 hours.`, 'Inspection booked'); },
+  'cal-bus': el => { S.school.calBus = el.dataset.id; S.school.tab='calendar'; render(); },
+  'price-bus': el => { const b = busById(el.dataset.id);
+    openModal(`<h2>Pricing · ${esc(b.plate)}</h2><p class="small muted">Suggested for ${b.seats} seats: ${fmt(SUGGESTED[b.seats]||b.daily)} per day.</p>
+      <div class="grid g3"><label class="f" for="pd">Per day<input class="inp num" type="number" id="pd" value="${b.daily}"></label><label class="f" for="pw">Per week<input class="inp num" type="number" id="pw" value="${b.weekly}"></label><label class="f" for="pm">Per month<input class="inp num" type="number" id="pm" value="${b.monthly}"></label></div>
+      <div class="row"><button class="btn" data-act="close-modal">Cancel</button><button class="btn primary" data-act="modal-submit">Save prices</button></div>`, () => {
+        b.daily = +$('#pd').value||b.daily; b.weekly = +$('#pw').value||b.weekly; b.monthly = +$('#pm').value||b.monthly; save(); closeModal(); render(); toast('Prices saved. New bookings use them.'); }); },
+  'cal-pick': el => { S.school.calBus = el.dataset.id; render(); },
+  'cal-mo': el => { S.school.calMonth = Math.max(0, Math.min(3, S.school.calMonth + +el.dataset.id)); render(); },
+  'cal-term': el => { const id = el.dataset.id, {booked, requested} = busDays(id), set = new Set(DB.blackouts[id]); weekdaysBetween(addDays(TODAY,1),'2026-12-04').forEach(d=>{ if(!booked.has(d)&&!requested.has(d)) set.add(d); }); DB.blackouts[id] = [...set]; save(); render(); toast('Weekdays blocked until 4 Dec.'); },
+  'cal-holiday': el => { const id = el.dataset.id; DB.blackouts[id] = DB.blackouts[id].filter(d => !(d>='2026-12-05' && d<='2026-12-31')); save(); render(); toast('December holiday is open for hire.'); },
+  approve: el => { const k = DB.bookings.find(x=>x.id===el.dataset.id), b = busById(k.bus); k.status='confirmed'; save(); render(); notify(`${k.ref} confirmed. Driver ${b.driver.name} assigned. Balance of ${fmt(k.q.balance)} due 48 hours before the trip.`, `WhatsApp to ${k.customer}`); },
+  decline: el => { const k = DB.bookings.find(x=>x.id===el.dataset.id); k.status='declined'; save(); render(); notify(`${k.ref} declined. Deposit of ${fmt(k.q.deposit)} refunded in full.`, `SMS to ${k.customer}`); },
+  redeem: el => { const sc = schoolById(MY_SCHOOL), r = sc.rewards.find(x=>x.id===el.dataset.id); const b = mySchoolBuses()[0];
+    r.status = 'booked'; DB.jobs.push({id:uid('j'), bus:b.id, type:'Weekly check', funding:'reward', due:addDays(TODAY,3), status:'open', reward:r.id, cost:DB.settings.checkCost});
+    save(); render(); notify(`Free weekly check for ${b.plate} booked with ${mechanicName()} on ${fmtDate(addDays(TODAY,3))}.`, 'Booked'); },
+
+  /* driver */
+  'drv-code': () => { S.driver.step='code'; render(); toast('Code 4821 sent.', 'SMS'); },
+  'drv-login': () => { S.driver.step='list'; render(); },
+  'drv-out': () => { S.driver.step='login'; render(); },
+  'drv-open': el => { S.driver.trip = el.dataset.id; S.driver.step='trip'; render(); },
+  'drv-back': () => { S.driver.step='list'; render(); },
+  'drv-check': el => { const k = DB.bookings.find(x=>x.id===S.driver.trip); k.trip.checks[el.dataset.id] = !k.trip.checks[el.dataset.id]; save(); render(); },
+  'drv-start': () => { const k = DB.bookings.find(x=>x.id===S.driver.trip); k.status='in_progress'; k.trip.startedAt='07:15'; save(); render(); notify(`${busById(k.bus).driver.name} has started your trip. Track it live in My trips.`, `WhatsApp to ${k.customer}`); },
+  'drv-roll': el => { const k = DB.bookings.find(x=>x.id===S.driver.trip); k.trip.roll[el.dataset.id] = !k.trip.roll[el.dataset.id]; save(); render(); },
+  'drv-roll-all': () => { const k = DB.bookings.find(x=>x.id===S.driver.trip); ROLL.forEach((_,i)=>k.trip.roll[i]=true); save(); render(); },
+  'drv-incident': () => { const k = DB.bookings.find(x=>x.id===S.driver.trip);
+    openModal(`<h2>Report a problem</h2><div class="grid g2">${['Breakdown','Accident','Medical','Road blocked'].map((t,i)=>`<label class="chk"><input type="radio" name="it" value="${t}" ${i===0?'checked':''}><span>${t}</span></label>`).join('')}</div>
+      <label class="f" for="inote">Short note<textarea class="inp" id="inote">Engine warning light on, stopped safely at the roadside.</textarea></label>
+      <div class="row"><button class="btn" data-act="close-modal">Cancel</button><button class="btn danger" data-act="modal-submit">Send now</button></div>`, () => {
+        DB.incidents.push({id:uid('i'), bus:k.bus, date:TODAY, type:document.querySelector('input[name=it]:checked').value, text:$('#inote').value.trim() + ` (${k.ref})`, status:'open'}); save(); closeModal(); render(); notify('Support team alerted. A nearby platform mechanic is on standby.', 'Emergency'); }); },
+  'drv-end': () => { const k = DB.bookings.find(x=>x.id===S.driver.trip); completeTrip(k); save(); S.driver.step='list'; render(); },
+
+  /* mechanic */
+  'mech-tab': el => { S.mech.tab = el.dataset.id; render(); },
+  'mech-open': el => { S.mech.job = el.dataset.id; S.mech.form = {}; render(); window.scrollTo({top:0}); },
+  'mech-back': () => { S.mech.job = null; render(); },
+  'mech-pf': el => { S.mech.form[el.dataset.id] = el.dataset.v; render(); },
+  'mech-allpass': () => { INSPECT.forEach((_,i)=>S.mech.form[i]='pass'); render(); },
+  'mech-submit': () => { const j = DB.jobs.find(x=>x.id===S.mech.job), b = busById(j.bus), f = S.mech.form;
+    const fails = INSPECT.filter((_,i)=>f[i]==='fail'), pass = !fails.length;
+    j.status='done'; j.outcome = pass?'pass':'fail'; j.done = TODAY; if(f.cost) j.cost = +f.cost;
+    if(pass){ b.inspection = TODAY; if(b.status==='pending_inspection' || b.status==='inspection_failed') b.status = 'pending_approval'; }
+    else { if(b.status!=='listed') b.status='inspection_failed'; b.failNote = `Failed: ${fails.join(', ')}. ${f.note||''}`; }
+    if(j.reward){ const r = schoolById(b.school).rewards.find(x=>x.id===j.reward); if(r){ r.status='used'; r.used = `Used ${fmtDate(TODAY)} at ${mechanicName()}`; } }
+    save(); S.mech.job=null; render();
+    notify(pass ? (j.type==='Listing inspection' ? `${b.plate} passed inspection. Sent to admin for approval.` : `${b.plate} passed its ${j.type.toLowerCase()}.`) : `${b.plate} failed ${fails.length} item${fails.length>1?'s':''}. The school has the report.`, `Report to ${schoolById(b.school).name}`); },
+
+  /* admin */
+  'admin-tab': el => { S.admin.tab = el.dataset.id; render(); },
+  'adm-approve': el => { const {kind, id} = el.dataset;
+    if(kind==='school') schoolById(id).status='verified';
+    if(kind==='bus') busById(id).status='listed';
+    if(kind==='mechanic') DB.mechanics.find(m=>m.id===id).status='verified';
+    save(); render(); toast(kind==='bus' ? 'Vehicle approved. It now shows in search.' : 'Approved. They can start using Bus&Go.'); },
+  'adm-reject': el => { const {kind, id} = el.dataset;
+    if(kind==='school') schoolById(id).status='rejected';
+    if(kind==='bus') busById(id).status='rejected';
+    if(kind==='mechanic') DB.mechanics.find(m=>m.id===id).status='rejected';
+    save(); render(); toast('Rejected. We sent them the reason by SMS.'); },
+  resolve: el => { DB.incidents.find(i=>i.id===el.dataset.id).status='resolved'; save(); render(); },
+  'adm-inspect': el => { const b = busById(el.dataset.id); if(!DB.jobs.some(j=>j.bus===b.id && j.status==='open')) DB.jobs.push({id:uid('j'), bus:b.id, type:'Safety inspection', funding:'school', due:addDays(TODAY,3), status:'open', cost:120000}); save(); render(); toast(`Inspection ordered for ${b.plate}.`); }
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if(!el) return;
+  const fn = ACTIONS[el.dataset.act]; if(!fn) return;
+  if(el.tagName==='A') e.preventDefault();
+  fn(el, e);
+});
+document.addEventListener('submit', e => { e.preventDefault(); if(e.target.dataset.form==='search'){ S.hire.view='list'; render(); } });
+document.addEventListener('change', e => {
+  const t = e.target;
+  if(t.dataset.bind){ let v = t.value; if(t.dataset.num || t.type==='number') v = +v; setPath(t.dataset.bind, v);
+    if(t.dataset.bind==='search.start' && S.search.end < S.search.start) S.search.end = S.search.start;
+    render(); }
+  if(t.dataset.addon){ S.draft.addons[t.dataset.addon] = t.checked; render(); }
+  if(t.dataset.check){ setPath(t.dataset.check, t.checked); render(); }
+  if(t.dataset.setting){ DB.settings[t.dataset.setting] = +t.value; save(); toast('Rule saved.'); }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if(t.dataset.text){ setPath(t.dataset.text, t.value);
+    if(t.dataset.text==='hire.signer'){ const b = $('#sign-btn'); if(b) b.disabled = !(S.hire.agree && t.value.trim().length>2); } }
+});
+document.addEventListener('keydown', e => { if(e.key==='Escape' && $('#modal').innerHTML) closeModal(); });
+
+/* drag-to-paint on the school calendar */
+function bindCalendarPaint(){
+  document.querySelectorAll('[data-cal]').forEach(grid => {
+    const busId = grid.dataset.cal; let mode = null; const touched = new Set();
+    const paint = cell => { if(!cell || !cell.dataset.day || touched.has(cell.dataset.day)) return; touched.add(cell.dataset.day); cell.classList.toggle('blk', mode==='block'); };
+    grid.addEventListener('pointerdown', e => { const c = e.target.closest('[data-day]'); if(!c) return; e.preventDefault(); mode = c.classList.contains('blk') ? 'open' : 'block'; touched.clear(); paint(c); grid.setPointerCapture(e.pointerId); });
+    grid.addEventListener('pointermove', e => { if(!mode) return; const c = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-day]'); if(c && grid.contains(c)) paint(c); });
+    const finish = () => { if(!mode) return; const set = new Set(DB.blackouts[busId]||[]); touched.forEach(d => mode==='block' ? set.add(d) : set.delete(d)); DB.blackouts[busId] = [...set]; const n = touched.size, m = mode; mode = null; save(); render(); toast(`${n} day${n>1?'s':''} ${m==='block'?'blocked for school use':'opened for hire'}.`); };
+    grid.addEventListener('pointerup', finish); grid.addEventListener('pointercancel', finish);
+  });
+}
+
+function fromHash(){ const h = location.hash.slice(1); S.role = ROLES.some(r=>r.id===h) ? h : 'hire'; render(); }
+window.addEventListener('hashchange', fromHash);
+fromHash();
+</script>
+</body>
+</html>
