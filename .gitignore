@@ -1,1 +1,14 @@
 *.zip
+node_modules/
+.next/
+out/
+.env
+.env.local
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# Supabase local dev
+supabase/.temp/
+supabase/.branches/

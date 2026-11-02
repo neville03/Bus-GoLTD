@@ -1,13 +1,42 @@
-# Bus&Go Ltd: clickable prototype
+# Bus&Go Ltd
 
-A marketplace that lets schools in Uganda hire out idle buses. This is a single-file web prototype for demos. Open `index.html` in any browser. It needs no build step or server.
+A marketplace in Kampala where schools hire out their idle buses to churches, companies, tour groups and other schools.
 
-## What's in it
-- **Landing page**: hero with quick search, how it works, safety, an earnings calculator for schools, programmes, and pickup areas in Kampala. Photos are in `img/`.
-- **Hire a bus**: search, filters, bus detail, availability calendar, a 4-step booking (trip, price, agreement, mobile-money deposit), my trips, rating, cancellation refund tiers, holiday programmes and conversion enquiries
-- **School**: overview, fleet with verification steps, add a bus, drag-to-block calendar, approve or decline bookings, earnings and escrow, rewards
-- **Driver**: phone sign-in, a pre-trip checklist that must be finished before the trip can start, start and end trip, roll call, incident report
-- **Mechanic**: job inbox showing who pays for each job, pass/fail inspection form
-- **Admin**: approvals, safety dashboard, escrow, commission and reward rules
+**To launch the site, follow [docs/LAUNCH.md](docs/LAUNCH.md).**
 
-All data is sample data, stored in the browser. Use **Reset** to restore it, and **Demo guide** for a walkthrough.
+## What it does
+
+- **Hirers:** search buses by date and size, see availability, send booking requests, track status, see payment instructions, cancel.
+- **Schools:** apply with documents, add buses with photos and documents, set prices, block school-use days on a calendar, accept or decline requests, mark trips done.
+- **Bus&Go team (admin):** approve schools, record bus inspections and put buses live, record deposits, see every booking, manage commission, deposit percentage and contact details.
+
+Security is enforced in the database (row-level security and triggers in `supabase/migrations/0001_init.sql`):
+schools can't approve themselves, hirers can't confirm their own bookings or change prices,
+blocked and booked days can't be double-booked, documents and payout details are private,
+and a hirer gets the school's contact only after the deposit is recorded.
+
+## Stack
+
+Next.js 15 (App Router) · Supabase (Postgres, Auth, Storage) · hosted on Vercel.
+
+## Run it on your computer
+
+Requires Node 20+ and Docker.
+
+```bash
+npm install
+npx supabase start          # local database, login and file storage
+cp .env.example .env.local  # then paste the API URL and anon key that `supabase start` printed
+npm run dev                 # http://localhost:3000
+```
+
+Make yourself admin locally: sign up, then
+`psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -c "update profiles set role='admin' where email='you@example.com'"`.
+
+## Folders
+
+- `app/`: pages (`/buses`, `/account`, `/school`, `/admin` and others)
+- `components/`: shared parts (calendar, uploads, forms)
+- `lib/`: Supabase clients, formatting, email alerts
+- `supabase/migrations/`: the database schema
+- `prototype/`: the original clickable demo (open `prototype/index.html`)
