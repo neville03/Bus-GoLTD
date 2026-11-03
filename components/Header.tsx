@@ -3,7 +3,8 @@ import { getSession, isConfigured } from "@/lib/auth";
 import { Icon } from "./Icon";
 
 export async function Header() {
-  const profile = isConfigured() ? (await getSession()).profile : null;
+  let profile = null;
+  try { profile = isConfigured() ? (await getSession()).profile : null; } catch { profile = null; } // never break the header
   const home = profile?.role === "admin" ? ["/admin", "Admin"] : profile?.role === "school" ? ["/school", "School dashboard"] : ["/account", "My bookings"];
   return (
     <header className="top">

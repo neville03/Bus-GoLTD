@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "./supabase/server";
 import type { Profile, School } from "./types";
 
-export const isConfigured = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+export const isConfigured = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim());
 
 export async function getSession() {
   if (!isConfigured()) redirect("/setup");
