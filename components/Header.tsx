@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { getSession } from "@/lib/auth";
+import { getSession, isConfigured } from "@/lib/auth";
 import { Icon } from "./Icon";
 
 export async function Header() {
-  const { profile } = await getSession();
+  const profile = isConfigured() ? (await getSession()).profile : null;
   const home = profile?.role === "admin" ? ["/admin", "Admin"] : profile?.role === "school" ? ["/school", "School dashboard"] : ["/account", "My bookings"];
   return (
     <header className="top">

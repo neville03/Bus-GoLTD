@@ -2,7 +2,10 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "./supabase/server";
 import type { Profile, School } from "./types";
 
+export const isConfigured = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
 export async function getSession() {
+  if (!isConfigured()) redirect("/setup");
   const supabase = await supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { supabase, user: null, profile: null as Profile | null };
